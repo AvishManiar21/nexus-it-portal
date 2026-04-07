@@ -33,5 +33,5 @@ export default function HomePage() {
         <a href="/contact" className="bg-zinc-800 hover:bg-zinc-700 text-white font-medium px-6 py-3 rounded-lg transition-colors">Contact Us</a>
       </section>
     </div>
-  );
+  )
 }
