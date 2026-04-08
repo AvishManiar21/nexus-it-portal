@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useCallback, useState } from "react";
-import { useRouter } from "next/navigation";
 
 // Must match the server-side SESSION_TIMEOUT_MINUTES in app/lib/session.ts
 const TIMEOUT_MINUTES = 15;
 const TIMEOUT_MS = TIMEOUT_MINUTES * 60 * 1000;
 // Show a warning 2 minutes before expiry
 const WARNING_MS = 2 * 60 * 1000;
+// Throttle server-side session refreshes to once per minute
+const REFRESH_THROTTLE_MS = 60 * 1000;
 
 const ACTIVITY_EVENTS = [
   "mousedown",
@@ -19,21 +20,39 @@ const ACTIVITY_EVENTS = [
 ] as const;
 
 export default function SessionGuard() {
-  const router = useRouter();
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
   const warningTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const lastRefreshRef = useRef<number>(Date.now());
   const [showWarning, setShowWarning] = useState(false);
 
-  const handleExpiry = useCallback(() => {
-    // Force navigate to login with expired flag
+  const handleExpiry = useCallback(async () => {
+    // Delete the server-side session cookie before redirecting
+    try {
+      await fetch("/api/session", { method: "DELETE" });
+    } catch {
+      // Redirect regardless — middleware will catch invalid sessions
+    }
     window.location.href = "/admin/login?expired=1";
   }, []);
 
+  const refreshServerSession = useCallback(() => {
+    const now = Date.now();
+    if (now - lastRefreshRef.current < REFRESH_THROTTLE_MS) return;
+    lastRefreshRef.current = now;
+
+    // Fire-and-forget: refresh the server session so it stays in sync
+    // with client-side activity. If it fails (session already expired),
+    // the expiry timer or next navigation will handle the redirect.
+    fetch("/api/session", { method: "POST" }).catch(() => {});
+  }, []);
+
   const resetTimers = useCallback(() => {
-    // Clear existing timers
     if (timerRef.current) clearTimeout(timerRef.current);
     if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
     setShowWarning(false);
+
+    // Refresh the server session on activity (throttled)
+    refreshServerSession();
 
     // Set warning timer (fires 2 min before expiry)
     warningTimerRef.current = setTimeout(() => {
@@ -42,13 +61,11 @@ export default function SessionGuard() {
 
     // Set expiry timer
     timerRef.current = setTimeout(handleExpiry, TIMEOUT_MS);
-  }, [handleExpiry]);
+  }, [handleExpiry, refreshServerSession]);
 
   useEffect(() => {
-    // Start timers on mount
     resetTimers();
 
-    // Reset timers on any user activity
     const onActivity = () => resetTimers();
     for (const event of ACTIVITY_EVENTS) {
       window.addEventListener(event, onActivity, { passive: true });
