@@ -1,22 +1,14 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, EmailStr
+from supabase import Client
 import bcrypt
 import jwt
 import os
 from datetime import datetime, timedelta, timezone
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+from app.database import get_db
 
-# Default admin credentials (password hash for "Admin123!")
-# In production, these would come from a database
-ADMIN_USERS = {
-    "admin@nexusit.com": {
-        "id": "1",
-        "email": "admin@nexusit.com",
-        "password_hash": "$2b$12$/XdunaZ.Dpo8MbcJh2fnUut.ez8JaN9EzPp18paudHTG766tdaki2",
-        "name": "Admin",
-    }
-}
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 SECRET_KEY = os.getenv("SECRET_KEY", "replace_with_your_secret")
 ALGORITHM = "HS256"
@@ -34,13 +26,22 @@ class LoginResponse(BaseModel):
 
 
 @router.post("/login", response_model=LoginResponse)
-def login(request: LoginRequest):
-    # Generic error message — does not reveal which field was wrong
+def login(request: LoginRequest, db: Client = Depends(get_db)):
+    # Generic error message — does not reveal which specific field was wrong
     invalid_msg = "Invalid email or password"
 
-    user = ADMIN_USERS.get(request.email)
-    if not user:
+    # Query admin_users table by email
+    result = (
+        db.table("admin_users")
+        .select("id, email, password_hash, name")
+        .eq("email", request.email)
+        .execute()
+    )
+
+    if not result.data:
         raise HTTPException(status_code=401, detail=invalid_msg)
+
+    user = result.data[0]
 
     if not bcrypt.checkpw(
         request.password.encode("utf-8"),
@@ -50,7 +51,7 @@ def login(request: LoginRequest):
 
     # Issue JWT
     payload = {
-        "sub": user["id"],
+        "sub": str(user["id"]),
         "email": user["email"],
         "name": user["name"],
         "exp": datetime.now(timezone.utc) + timedelta(hours=TOKEN_EXPIRY_HOURS),
@@ -60,7 +61,7 @@ def login(request: LoginRequest):
 
     return LoginResponse(
         token=token,
-        user={"id": user["id"], "email": user["email"], "name": user["name"]},
+        user={"id": str(user["id"]), "email": user["email"], "name": user["name"]},
     )
 
 
