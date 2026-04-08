@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS products (
     category VARCHAR(100),
     price FLOAT,
     image_url VARCHAR(500),
+    demo_video VARCHAR(500),
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
