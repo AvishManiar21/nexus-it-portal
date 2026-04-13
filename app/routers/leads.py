@@ -12,7 +12,7 @@ router = APIRouter(prefix="/leads", tags=["leads"])
 
 # Initialize Supabase
 supabase_url = os.getenv("SUPABASE_URL")
-supabase_key = os.getenv("SUPABASE_KEY")
+supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 supabase = create_client(supabase_url, supabase_key)
 
 # Pydantic models
