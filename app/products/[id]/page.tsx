@@ -2,6 +2,7 @@ import { fetchProduct } from "../../../lib/api";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import VideoPlayer from "@/components/VideoPlayer";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -52,20 +53,11 @@ export default async function ProductDetail({ params }: Props) {
         </p>
 
         {product.demo_video && (
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold text-zinc-800 dark:text-white mb-3">
-              Demo Video
-            </h2>
-            <div className="aspect-video rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-              <iframe
-                src={product.demo_video}
-                className="w-full h-full"
-                allowFullScreen
-                loading="lazy"
-                title={`${product.name} demo video`}
-              />
-            </div>
-          </div>
+          <VideoPlayer 
+            videoUrl={product.demo_video}
+            productName={product.name}
+            productId={product.id}
+          />
         )}
 
         <div className="flex gap-4">
