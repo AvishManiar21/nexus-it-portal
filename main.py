@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import products, events, rfd, auth, leads, engagement
+from app.routers import products, events, rfd, auth, leads
 import os
 from dotenv import load_dotenv
 
@@ -28,7 +28,7 @@ app.include_router(events.router)
 app.include_router(rfd.router)
 app.include_router(auth.router)
 app.include_router(leads.router)
-app.include_router(engagement.router)
+
 
 @app.get("/")
 def root():
