@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import VideoPlayer from "@/components/VideoPlayer";
+import ProductViewTracker from "../../../components/ProductViewTracker";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -34,6 +35,7 @@ export default async function ProductDetail({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950 px-6 py-12">
+      <ProductViewTracker productId={product.id} />
       <div className="max-w-3xl mx-auto">
         <Link
           href="/products"
