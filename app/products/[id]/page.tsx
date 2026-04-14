@@ -2,6 +2,8 @@ import { fetchProduct } from "../../../lib/api";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import ProductViewTracker from "../../../components/ProductViewTracker";
+import DemoVideoTracker from "../../../components/DemoVideoTracker";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -33,6 +35,7 @@ export default async function ProductDetail({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950 px-6 py-12">
+      <ProductViewTracker productId={product.id} />
       <div className="max-w-3xl mx-auto">
         <Link
           href="/products"
@@ -57,12 +60,10 @@ export default async function ProductDetail({ params }: Props) {
               Demo Video
             </h2>
             <div className="aspect-video rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-              <iframe
-                src={product.demo_video}
-                className="w-full h-full"
-                allowFullScreen
-                loading="lazy"
-                title={`${product.name} demo video`}
+              <DemoVideoTracker
+                productId={product.id}
+                videoUrl={product.demo_video}
+                productName={product.name}
               />
             </div>
           </div>

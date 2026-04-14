@@ -72,6 +72,18 @@ CREATE TABLE IF NOT EXISTS lead_notes (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 8. contact_messages (FK -> leads)
+CREATE TABLE IF NOT EXISTS contact_messages (
+    id SERIAL PRIMARY KEY,
+    lead_id INTEGER NOT NULL REFERENCES leads(id),
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    subject VARCHAR(500) NOT NULL,
+    message TEXT NOT NULL,
+    status VARCHAR(50) DEFAULT 'new',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Create indexes for foreign keys
 CREATE INDEX IF NOT EXISTS idx_demo_sessions_lead_id ON demo_sessions(lead_id);
 CREATE INDEX IF NOT EXISTS idx_demo_sessions_product_id ON demo_sessions(product_id);
@@ -80,3 +92,4 @@ CREATE INDEX IF NOT EXISTS idx_rfd_submissions_lead_id ON rfd_submissions(lead_i
 CREATE INDEX IF NOT EXISTS idx_rfd_submissions_product_id ON rfd_submissions(product_id);
 CREATE INDEX IF NOT EXISTS idx_lead_notes_lead_id ON lead_notes(lead_id);
 CREATE INDEX IF NOT EXISTS idx_lead_notes_admin_id ON lead_notes(admin_id);
+CREATE INDEX IF NOT EXISTS idx_contact_messages_lead_id ON contact_messages(lead_id);

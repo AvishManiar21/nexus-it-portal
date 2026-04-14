@@ -21,7 +21,16 @@ export async function proxy(request: NextRequest) {
   );
 
   if (!isProtectedRoute) {
-    return NextResponse.next();
+    const response = NextResponse.next();
+    if (!request.cookies.get("visitor_session_id")) {
+      response.cookies.set("visitor_session_id", crypto.randomUUID(), {
+        maxAge: 60 * 60 * 24 * 365,
+        httpOnly: false,
+        sameSite: "lax",
+        path: "/",
+      });
+    }
+    return response;
   }
 
   const sessionCookie = request.cookies.get("session")?.value;

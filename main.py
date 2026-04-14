@@ -29,6 +29,7 @@ app.include_router(rfd.router)
 app.include_router(auth.router)
 app.include_router(leads.router)
 
+
 @app.get("/")
 def root():
     return {"message": "Backend is running!"}
