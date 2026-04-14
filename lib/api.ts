@@ -39,3 +39,30 @@ export async function fetchProduct(id: number): Promise<Product | null> {
     return null;
   }
 }
+
+export interface Lead {
+  id: number;
+  name: string;
+  email: string;
+  company: string | null;
+  status: string;
+  created_at: string;
+}
+
+export async function fetchLeads(
+  search?: string,
+  sortBy?: string,
+  sortOrder?: string
+): Promise<Lead[]> {
+  const params = new URLSearchParams();
+  if (search) params.set("search", search);
+  if (sortBy) params.set("sort_by", sortBy);
+  if (sortOrder) params.set("sort_order", sortOrder);
+  const qs = params.toString();
+  try {
+    return await apiFetch<Lead[]>(`/leads/${qs ? `?${qs}` : ""}`, "no-store");
+  } catch (error) {
+    console.error("Failed to fetch leads:", error);
+    return [];
+  }
+}
