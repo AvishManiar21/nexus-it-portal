@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Depends, Query, status
 from pydantic import BaseModel, EmailStr, validator
+from supabase import Client
 from typing import List, Optional
 import os
 from supabase import create_client
@@ -7,6 +8,8 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
+
+from app.database import get_db
 
 router = APIRouter(prefix="/leads", tags=["leads"])
 
@@ -22,6 +25,8 @@ SMTP_USERNAME = os.getenv("SMTP_USERNAME") or os.getenv("SENDER_EMAIL")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD") or os.getenv("SENDER_PASSWORD")
 FROM_EMAIL = os.getenv("FROM_EMAIL", SMTP_USERNAME)
 
+SORTABLE_COLUMNS = {"name", "email", "company", "status", "created_at"}
+
 # Pydantic models
 class RFDSubmission(BaseModel):
     company: str
@@ -31,31 +36,31 @@ class RFDSubmission(BaseModel):
     budget: str
     products: List[str]
     message: Optional[str] = None
-    
+
     @validator("company")
     def company_not_empty(cls, v):
         if not v or not v.strip():
             raise ValueError("Company name is required")
         return v.strip()
-    
+
     @validator("contactPerson")
     def contact_person_not_empty(cls, v):
         if not v or not v.strip():
             raise ValueError("Contact person name is required")
         return v.strip()
-    
+
     @validator("phone")
     def phone_not_empty(cls, v):
         if not v or not v.strip():
             raise ValueError("Phone number is required")
         return v.strip()
-    
+
     @validator("budget")
     def budget_not_empty(cls, v):
         if not v or not v.strip():
             raise ValueError("Budget range is required")
         return v.strip()
-    
+
     @validator("products")
     def products_not_empty(cls, v):
         if not v or len(v) == 0:
@@ -115,26 +120,26 @@ def send_confirmation_email(email: str, contact_person: str, company: str) -> bo
         if not SMTP_USERNAME or not SMTP_PASSWORD:
             print("Warning: SMTP credentials not configured, skipping email")
             return False
-        
+
         # Create message
         msg = MIMEMultipart("alternative")
         msg["Subject"] = "Demo Request Confirmation - Nexus IT"
         msg["From"] = SMTP_USERNAME
         msg["To"] = email
-        
+
         # Create plain text and HTML versions
         text = f"""
 Dear {contact_person},
 
 Thank you for submitting your demo request for Nexus IT solutions!
 
-We have received your request on behalf of {company} and will review your interest in our products. 
+We have received your request on behalf of {company} and will review your interest in our products.
 A member of our sales team will be in touch with you shortly at {email} to discuss your specific needs and schedule a demo.
 
 Best regards,
 Nexus IT Sales Team
         """.strip()
-        
+
         html = f"""
 <html>
   <body style="font-family: Arial, sans-serif; color: #333;">
@@ -149,19 +154,19 @@ Nexus IT Sales Team
   </body>
 </html>
         """.strip()
-        
+
         part1 = MIMEText(text, "plain")
         part2 = MIMEText(html, "html")
         msg.attach(part1)
         msg.attach(part2)
-        
+
         # Send email
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
         server.starttls()
         server.login(SMTP_USERNAME, SMTP_PASSWORD)
         server.sendmail(SMTP_USERNAME, email, msg.as_string())
         server.quit()
-        
+
         print(f"Confirmation email sent to {email}")
         return True
     except Exception as e:
@@ -228,7 +233,7 @@ async def submit_rfd(submission: RFDSubmission):
                     detail="Failed to create lead record"
                 )
             lead_id = response.data[0]["id"]
-        
+
         # Create RFD submission records for each product
         for product in submission.products:
             try:
@@ -240,7 +245,7 @@ async def submit_rfd(submission: RFDSubmission):
                 }).execute()
             except Exception as e:
                 print(f"Error creating RFD submission for product {product}: {str(e)}")
-        
+
         # Create engagement log
         try:
             supabase.table("engagement_logs").insert({
@@ -250,16 +255,16 @@ async def submit_rfd(submission: RFDSubmission):
             }).execute()
         except Exception as e:
             print(f"Error creating engagement log: {str(e)}")
-        
+
         # Send confirmation email (non-blocking)
         send_confirmation_email(submission.email, submission.contactPerson, submission.company)
-        
+
         return SubmissionResponse(
             success=True,
             message=f"Thank you! Your demo request has been submitted successfully. A confirmation email has been sent to {submission.email}",
             lead_id=lead_id
         )
-    
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -273,7 +278,7 @@ def submit_contact(submission: ContactSubmission):
     try:
         # Find or create lead by email
         existing_lead = supabase.table("leads").select("*").eq("email", submission.email).execute()
-        
+
         if existing_lead.data:
             lead_id = existing_lead.data[0]["id"]
         else:
@@ -322,16 +327,31 @@ def get_contact_messages():
 
 
 @router.get("/")
-def get_leads():
-    """Get all leads"""
-    try:
-        response = supabase.table("leads").select("*").execute()
-        return response.data
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error fetching leads: {str(e)}"
+def get_leads(
+    search: Optional[str] = Query(None, description="Search by company, contact name, or email"),
+    sort_by: Optional[str] = Query("created_at", description="Column to sort by"),
+    sort_order: Optional[str] = Query("desc", description="Sort order: asc or desc"),
+    db: Client = Depends(get_db),
+):
+    """Return all leads with optional search and sort."""
+    if sort_by not in SORTABLE_COLUMNS:
+        sort_by = "created_at"
+    if sort_order not in ("asc", "desc"):
+        sort_order = "desc"
+
+    query = db.table("leads").select("id, name, email, company, status, created_at")
+
+    if search and search.strip():
+        term = search.strip()
+        query = query.or_(
+            f"company.ilike.%{term}%,name.ilike.%{term}%,email.ilike.%{term}%"
         )
+
+    descending = sort_order == "desc"
+    query = query.order(sort_by, desc=descending)
+
+    result = query.execute()
+    return result.data
 
 
 @router.get("/{lead_id}", response_model=LeadResponse)

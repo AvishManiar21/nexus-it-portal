@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { logout } from "@/app/actions/auth"
+import Link from "next/link"
 
 interface Lead {
   id: string
@@ -104,6 +105,16 @@ export default function AdminPage() {
             <p className="text-red-800">{error}</p>
           </div>
         )}
+
+        {/* Quick Actions */}
+        <div className="mb-8">
+          <Link
+            href="/admin/leads"
+            className="inline-block px-5 py-3 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+          >
+            Search &amp; Sort All Leads
+          </Link>
+        </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
