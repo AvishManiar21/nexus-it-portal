@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 
 interface Lead {
   id: number;
@@ -23,6 +24,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function LeadTable() {
+  const router = useRouter();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortColumn>("created_at");
@@ -131,7 +133,8 @@ export default function LeadTable() {
               leads.map((lead) => (
                 <tr
                   key={lead.id}
-                  className="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                  onClick={() => router.push(`/admin/leads/${lead.id}`)}
+                  className="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                 >
                   <td className="px-6 py-4 text-sm font-medium text-zinc-900 dark:text-white">
                     {lead.company || "\u2014"}

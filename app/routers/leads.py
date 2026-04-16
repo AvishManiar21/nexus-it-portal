@@ -36,6 +36,7 @@ class RFDSubmission(BaseModel):
     budget: str
     products: List[str]
     message: Optional[str] = None
+    session_id: Optional[str] = None
 
     @validator("company")
     def company_not_empty(cls, v):
@@ -87,6 +88,7 @@ class ContactSubmission(BaseModel):
     email: str
     subject: str
     message: str
+    session_id: Optional[str] = None
 
     @validator("name")
     def name_required(cls, v):
@@ -219,14 +221,18 @@ async def submit_rfd(submission: RFDSubmission):
     """
     try:
         # All database operations in a transaction
-        with supabase.client.table("leads").insert({
+        lead_data = {
             "name": submission.contactPerson,
             "email": submission.email,
             "company": submission.company,
             "phone": submission.phone,
             "source": "RFD Form",
-            "status": "new"
-        }).execute() as response:
+            "status": "new",
+            "budget": submission.budget,
+        }
+        if submission.session_id:
+            lead_data["session_id"] = submission.session_id
+        with supabase.client.table("leads").insert(lead_data).execute() as response:
             if not response.data:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -281,14 +287,21 @@ def submit_contact(submission: ContactSubmission):
 
         if existing_lead.data:
             lead_id = existing_lead.data[0]["id"]
+            # Link session_id if not already set
+            if submission.session_id and not existing_lead.data[0].get("session_id"):
+                supabase.table("leads").update(
+                    {"session_id": submission.session_id}
+                ).eq("id", lead_id).execute()
         else:
             # Create new lead for contact form
             lead_data = {
                 "name": submission.name,
                 "email": submission.email,
                 "source": "contact-form",
-                "status": "new"
+                "status": "new",
             }
+            if submission.session_id:
+                lead_data["session_id"] = submission.session_id
             response = supabase.table("leads").insert(lead_data).execute()
             lead_id = response.data[0]["id"]
 
@@ -370,3 +383,94 @@ async def get_lead(lead_id: int):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error fetching lead: {str(e)}"
         )
+
+
+@router.get("/{lead_id}/profile")
+async def get_lead_profile(lead_id: int, db: Client = Depends(get_db)):
+    """Return the full lead profile: contact info, form submissions, behavioral timeline, and notes."""
+    # Lead contact details
+    lead_res = db.table("leads").select("*").eq("id", lead_id).execute()
+    if not lead_res.data:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    lead = lead_res.data[0]
+
+    # RFD submissions with product name
+    rfd_res = db.table("rfd_submissions").select(
+        "id, message, status, created_at, product_id, products(name)"
+    ).eq("lead_id", lead_id).order("created_at", desc=True).execute()
+
+    # Contact messages
+    contact_res = db.table("contact_messages").select(
+        "id, subject, message, status, created_at"
+    ).eq("lead_id", lead_id).order("created_at", desc=True).execute()
+
+    # Engagement logs (general actions)
+    engagement_res = db.table("engagement_logs").select(
+        "id, action, details, created_at"
+    ).eq("lead_id", lead_id).order("created_at", desc=True).execute()
+
+    # Internal notes with admin author name
+    notes_res = db.table("lead_notes").select(
+        "id, note, created_at, admin_id, admin_users(name)"
+    ).eq("lead_id", lead_id).order("created_at", desc=True).execute()
+
+    # Build a unified chronological timeline
+    timeline = []
+
+    # Engagement logs (e.g. RFD Submission)
+    for e in (engagement_res.data or []):
+        timeline.append({
+            "type": e["action"],
+            "details": e.get("details"),
+            "occurred_at": e["created_at"],
+        })
+
+    # Behavioral data linked via session_id
+    session_id = lead.get("session_id")
+    if session_id:
+        # Product page views
+        page_views_res = db.table("visitor_page_views").select(
+            "product_id, viewed_at, products(name)"
+        ).eq("session_id", session_id).execute()
+        for pv in (page_views_res.data or []):
+            product_name = (pv.get("products") or {}).get("name", f"Product #{pv['product_id']}")
+            timeline.append({
+                "type": "Page View",
+                "details": f"Viewed {product_name}",
+                "occurred_at": pv["viewed_at"],
+            })
+
+        # Video engagement events (demo started, demo completed, with duration)
+        video_res = db.table("video_engagement_events").select(
+            "product_id, event_type, watch_duration_seconds, created_at, products(name)"
+        ).eq("session_id", session_id).execute()
+        for ve in (video_res.data or []):
+            product_name = (ve.get("products") or {}).get("name", f"Product #{ve['product_id']}")
+            event_label = ve["event_type"].replace("_", " ").title()
+            detail = f"{event_label} — {product_name}"
+            if ve.get("watch_duration_seconds"):
+                detail += f" ({ve['watch_duration_seconds']}s watched)"
+            timeline.append({
+                "type": "Demo Video",
+                "details": detail,
+                "occurred_at": ve["created_at"],
+            })
+
+    # Sort timeline chronologically (oldest first)
+    timeline.sort(key=lambda x: x["occurred_at"])
+
+    return {
+        "lead": lead,
+        "rfd_submissions": rfd_res.data or [],
+        "contact_messages": contact_res.data or [],
+        "timeline": timeline,
+        "notes": [
+            {
+                "id": n["id"],
+                "note": n["note"],
+                "created_at": n["created_at"],
+                "author": (n.get("admin_users") or {}).get("name", "Unknown"),
+            }
+            for n in (notes_res.data or [])
+        ],
+    }

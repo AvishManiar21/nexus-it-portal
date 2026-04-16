@@ -49,6 +49,55 @@ export interface Lead {
   created_at: string;
 }
 
+export interface LeadProfile {
+  lead: {
+    id: number;
+    name: string;
+    email: string;
+    company: string | null;
+    phone: string | null;
+    budget: string | null;
+    source: string | null;
+    status: string;
+    created_at: string;
+  };
+  rfd_submissions: {
+    id: number;
+    message: string;
+    status: string;
+    created_at: string;
+    product_id: number;
+    products: { name: string } | null;
+  }[];
+  contact_messages: {
+    id: number;
+    subject: string;
+    message: string;
+    status: string;
+    created_at: string;
+  }[];
+  timeline: {
+    type: string;
+    details: string | null;
+    occurred_at: string;
+  }[];
+  notes: {
+    id: number;
+    note: string;
+    created_at: string;
+    author: string;
+  }[];
+}
+
+export async function fetchLeadProfile(id: number): Promise<LeadProfile | null> {
+  try {
+    return await apiFetch<LeadProfile>(`/leads/${id}/profile`, "no-store");
+  } catch (error) {
+    console.error(`Failed to fetch lead profile ${id}:`, error);
+    return null;
+  }
+}
+
 export async function fetchLeads(
   search?: string,
   sortBy?: string,
