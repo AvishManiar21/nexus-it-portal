@@ -82,12 +82,17 @@ export default function ContactPage() {
       setErrorMessage("")
 
       try {
+        const sessionId = document.cookie
+          .split("; ")
+          .find((row) => row.startsWith("visitor_session_id="))
+          ?.split("=")[1]
+
         const response = await fetch("/api/contact/submit", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({ ...formData, session_id: sessionId || null }),
         })
 
         const data = await response.json()
