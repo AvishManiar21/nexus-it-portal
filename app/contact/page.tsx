@@ -5,6 +5,9 @@ import { useState, ChangeEvent, FormEvent } from "react"
 interface FormData {
   name: string
   email: string
+  company: string
+  phone: string
+  budget: string
   subject: string
   message: string
 }
@@ -12,14 +15,27 @@ interface FormData {
 interface FormErrors {
   name?: string
   email?: string
+  company?: string
+  phone?: string
+  budget?: string
   subject?: string
   message?: string
 }
+
+const BUDGET_OPTIONS = [
+  "$1,000 - $5,000",
+  "$5,000 - $10,000",
+  "$10,000 - $25,000",
+  "$25,000+"
+]
 
 export default function ContactPage() {
   const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
+    company: "",
+    phone: "",
+    budget: "",
     subject: "",
     message: ""
   })
@@ -30,9 +46,9 @@ export default function ContactPage() {
   const [errorMessage, setErrorMessage] = useState("")
 
   const handleInputChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ): void => {
-    const target = e.target as HTMLInputElement | HTMLTextAreaElement
+    const target = e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     const { name, value } = target
     
     setFormData(prev => ({
@@ -59,6 +75,18 @@ export default function ContactPage() {
       newErrors.email = "Email is required"
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Please enter a valid email address"
+    }
+
+    if (!formData.company.trim()) {
+      newErrors.company = "Company name is required"
+    }
+
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone is required"
+    }
+
+    if (!formData.budget) {
+      newErrors.budget = "Budget range is required"
     }
 
     if (!formData.subject.trim()) {
@@ -106,6 +134,9 @@ export default function ContactPage() {
         setFormData({
           name: "",
           email: "",
+          company: "",
+          phone: "",
+          budget: "",
           subject: "",
           message: ""
         })
@@ -126,6 +157,9 @@ export default function ContactPage() {
     setFormData({
       name: "",
       email: "",
+      company: "",
+      phone: "",
+      budget: "",
       subject: "",
       message: ""
     })
@@ -197,6 +231,71 @@ export default function ContactPage() {
             </div>
 
             {/* Subject */}
+            <div>
+              <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-1">
+                Company Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="company"
+                name="company"
+                value={formData.company}
+                onChange={handleInputChange}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
+                  errors.company ? "border-red-500 focus:ring-red-500" : "border-gray-300"
+                }`}
+                placeholder="Enter your company name"
+              />
+              {errors.company && (
+                <p className="text-red-500 text-sm mt-1">{errors.company}</p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                Phone <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
+                  errors.phone ? "border-red-500 focus:ring-red-500" : "border-gray-300"
+                }`}
+                placeholder="Enter your phone number"
+              />
+              {errors.phone && (
+                <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="budget" className="block text-sm font-medium text-gray-700 mb-1">
+                Budget Range <span className="text-red-500">*</span>
+              </label>
+              <select
+                id="budget"
+                name="budget"
+                value={formData.budget}
+                onChange={handleInputChange}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
+                  errors.budget ? "border-red-500 focus:ring-red-500" : "border-gray-300"
+                }`}
+              >
+                <option value="">Select your budget range</option>
+                {BUDGET_OPTIONS.map((budget) => (
+                  <option key={budget} value={budget}>
+                    {budget}
+                  </option>
+                ))}
+              </select>
+              {errors.budget && (
+                <p className="text-red-500 text-sm mt-1">{errors.budget}</p>
+              )}
+            </div>
+
             <div>
               <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
                 Subject <span className="text-red-500">*</span>
