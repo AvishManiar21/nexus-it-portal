@@ -159,6 +159,21 @@ def upsert_lead_from_submission(lead_data: dict):
         )
     return lookup.data[0]
 
+def resolve_product_ids(product_names: List[str]) -> dict:
+    """Map product names from form payload to product IDs from DB."""
+    products_res = supabase.table("products").select("id,name").execute()
+    name_to_id = {p["name"]: p["id"] for p in (products_res.data or [])}
+    resolved = {}
+    for name in product_names:
+        product_id = name_to_id.get(name)
+        if not product_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Unknown product selected: {name}"
+            )
+        resolved[name] = product_id
+    return resolved
+
 def send_confirmation_email(email: str, contact_person: str, company: str) -> bool:
     """Send confirmation email to visitor"""
     try:
@@ -277,17 +292,16 @@ async def submit_rfd(submission: RFDSubmission):
         lead = upsert_lead_from_submission(lead_data)
         lead_id = lead["id"]
 
-        # Create RFD submission records for each product
-        for product in submission.products:
-            try:
-                supabase.table("rfd_submissions").insert({
-                    "lead_id": lead_id,
-                    "product_id": 1,  # Placeholder - would match with actual product
-                    "message": submission.message or "",
-                    "status": "pending"
-                }).execute()
-            except Exception as e:
-                print(f"Error creating RFD submission for product {product}: {str(e)}")
+        # Create RFD submission records for each selected product.
+        # If any product cannot be resolved or persisted, fail the request to avoid silent data loss.
+        product_map = resolve_product_ids(submission.products)
+        for product_name in submission.products:
+            supabase.table("rfd_submissions").insert({
+                "lead_id": lead_id,
+                "product_id": product_map[product_name],
+                "message": submission.message or "",
+                "status": "pending"
+            }).execute()
 
         # Create engagement log
         try:
@@ -308,6 +322,8 @@ async def submit_rfd(submission: RFDSubmission):
             lead_id=lead_id
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
