@@ -42,25 +42,25 @@ class RFDSubmission(BaseModel):
     def company_not_empty(cls, v):
         if not v or not v.strip():
             raise ValueError("Company name is required")
-        return v.strip()
+        return v
 
     @validator("contactPerson")
     def contact_person_not_empty(cls, v):
         if not v or not v.strip():
             raise ValueError("Contact person name is required")
-        return v.strip()
+        return v
 
     @validator("phone")
     def phone_not_empty(cls, v):
         if not v or not v.strip():
             raise ValueError("Phone number is required")
-        return v.strip()
+        return v
 
     @validator("budget")
     def budget_not_empty(cls, v):
         if not v or not v.strip():
             raise ValueError("Budget range is required")
-        return v.strip()
+        return v
 
     @validator("products")
     def products_not_empty(cls, v):
@@ -86,6 +86,9 @@ class SubmissionResponse(BaseModel):
 class ContactSubmission(BaseModel):
     name: str
     email: str
+    company: str
+    phone: str
+    budget: str
     subject: str
     message: str
     session_id: Optional[str] = None
@@ -110,11 +113,66 @@ class ContactSubmission(BaseModel):
             raise ValueError("Subject is required")
         return v
 
+    @validator("company")
+    def company_required(cls, v):
+        if not v or not v.strip():
+            raise ValueError("Company name is required")
+        return v
+
+    @validator("phone")
+    def phone_required(cls, v):
+        if not v or not v.strip():
+            raise ValueError("Phone is required")
+        return v
+
+    @validator("budget")
+    def budget_required(cls, v):
+        if not v or not v.strip():
+            raise ValueError("Budget range is required")
+        return v
+
     @validator("message")
     def message_required(cls, v):
         if not v or not v.strip():
             raise ValueError("Message is required")
         return v
+
+def upsert_lead_from_submission(lead_data: dict):
+    """
+    Concurrency-safe lead creation/update using email unique constraint.
+    Returns the resulting lead row with id and profile fields.
+    """
+    response = supabase.table("leads").upsert(
+        lead_data,
+        on_conflict="email",
+    ).execute()
+
+    if response.data:
+        return response.data[0]
+
+    # Fallback when upsert does not return representation.
+    lookup = supabase.table("leads").select("*").eq("email", lead_data["email"]).limit(1).execute()
+    if not lookup.data:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create or retrieve lead record"
+        )
+    return lookup.data[0]
+
+def resolve_product_ids(product_names: List[str]) -> dict:
+    """Map product names from form payload to product IDs from DB."""
+    products_res = supabase.table("products").select("id,name").execute()
+    name_to_id = {p["name"]: p["id"] for p in (products_res.data or [])}
+    resolved = {}
+    for name in product_names:
+        product_id = name_to_id.get(name)
+        if not product_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Unknown product selected: {name}"
+            )
+        resolved[name] = product_id
+    return resolved
 
 def send_confirmation_email(email: str, contact_person: str, company: str) -> bool:
     """Send confirmation email to visitor"""
@@ -220,7 +278,6 @@ async def submit_rfd(submission: RFDSubmission):
     3. Send confirmation email
     """
     try:
-        # All database operations in a transaction
         lead_data = {
             "name": submission.contactPerson,
             "email": submission.email,
@@ -232,25 +289,19 @@ async def submit_rfd(submission: RFDSubmission):
         }
         if submission.session_id:
             lead_data["session_id"] = submission.session_id
-        with supabase.client.table("leads").insert(lead_data).execute() as response:
-            if not response.data:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Failed to create lead record"
-                )
-            lead_id = response.data[0]["id"]
+        lead = upsert_lead_from_submission(lead_data)
+        lead_id = lead["id"]
 
-        # Create RFD submission records for each product
-        for product in submission.products:
-            try:
-                supabase.table("rfd_submissions").insert({
-                    "lead_id": lead_id,
-                    "product_id": 1,  # Placeholder - would match with actual product
-                    "message": submission.message or "",
-                    "status": "pending"
-                }).execute()
-            except Exception as e:
-                print(f"Error creating RFD submission for product {product}: {str(e)}")
+        # Create RFD submission records for each selected product.
+        # If any product cannot be resolved or persisted, fail the request to avoid silent data loss.
+        product_map = resolve_product_ids(submission.products)
+        for product_name in submission.products:
+            supabase.table("rfd_submissions").insert({
+                "lead_id": lead_id,
+                "product_id": product_map[product_name],
+                "message": submission.message or "",
+                "status": "pending"
+            }).execute()
 
         # Create engagement log
         try:
@@ -271,6 +322,8 @@ async def submit_rfd(submission: RFDSubmission):
             lead_id=lead_id
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -282,28 +335,20 @@ async def submit_rfd(submission: RFDSubmission):
 def submit_contact(submission: ContactSubmission):
     """Submit a contact form"""
     try:
-        # Find or create lead by email
-        existing_lead = supabase.table("leads").select("*").eq("email", submission.email).execute()
-
-        if existing_lead.data:
-            lead_id = existing_lead.data[0]["id"]
-            # Link session_id if not already set
-            if submission.session_id and not existing_lead.data[0].get("session_id"):
-                supabase.table("leads").update(
-                    {"session_id": submission.session_id}
-                ).eq("id", lead_id).execute()
-        else:
-            # Create new lead for contact form
-            lead_data = {
-                "name": submission.name,
-                "email": submission.email,
-                "source": "contact-form",
-                "status": "new",
-            }
-            if submission.session_id:
-                lead_data["session_id"] = submission.session_id
-            response = supabase.table("leads").insert(lead_data).execute()
-            lead_id = response.data[0]["id"]
+        # Upsert provides concurrency-safe create/update under simultaneous submissions.
+        lead_data = {
+            "name": submission.name,
+            "email": submission.email,
+            "company": submission.company,
+            "phone": submission.phone,
+            "budget": submission.budget,
+            "source": "contact-form",
+            "status": "new",
+        }
+        if submission.session_id:
+            lead_data["session_id"] = submission.session_id
+        lead = upsert_lead_from_submission(lead_data)
+        lead_id = lead["id"]
 
         # Store contact message
         message_data = {
