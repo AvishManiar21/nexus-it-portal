@@ -3,7 +3,8 @@ const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL;
 async function apiFetch<T>(path: string, cacheOption?: RequestCache): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     cache: cacheOption || "force-cache",
-    next: { revalidate: 60 }
+    next: { revalidate: 60 },
+    credentials: "include"  // Send cookies for authentication
   });
   if (!res.ok) {
     throw new Error(`API error ${res.status}: ${res.statusText}`);
