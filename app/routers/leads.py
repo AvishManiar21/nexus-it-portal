@@ -10,6 +10,7 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 
 from app.database import get_db
+from app.dependencies.auth import get_current_admin
 
 router = APIRouter(prefix="/leads", tags=["leads"])
 
@@ -374,8 +375,8 @@ def submit_contact(submission: ContactSubmission):
 
 
 @router.get("/contact-messages")
-def get_contact_messages():
-    """Get all contact messages"""
+def get_contact_messages(admin: dict = Depends(get_current_admin)):
+    """Get all contact messages (requires authentication)"""
     try:
         response = supabase.table("contact_messages").select("*").execute()
         return response.data
@@ -390,8 +391,9 @@ def get_leads(
     sort_by: Optional[str] = Query("created_at", description="Column to sort by"),
     sort_order: Optional[str] = Query("desc", description="Sort order: asc or desc"),
     db: Client = Depends(get_db),
+    admin: dict = Depends(get_current_admin),
 ):
-    """Return all leads with optional search and sort."""
+    """Return all leads with optional search and sort (requires authentication)"""
     if sort_by not in SORTABLE_COLUMNS:
         sort_by = "created_at"
     if sort_order not in ("asc", "desc"):
@@ -413,8 +415,8 @@ def get_leads(
 
 
 @router.get("/{lead_id}", response_model=LeadResponse)
-async def get_lead(lead_id: int):
-    """Get a specific lead with details"""
+async def get_lead(lead_id: int, admin: dict = Depends(get_current_admin)):
+    """Get a specific lead with details (requires authentication)"""
     try:
         response = supabase.table("leads").select("*").eq("id", lead_id).execute()
         if not response.data:
@@ -431,7 +433,7 @@ async def get_lead(lead_id: int):
 
 
 @router.get("/{lead_id}/profile")
-async def get_lead_profile(lead_id: int, db: Client = Depends(get_db)):
+async def get_lead_profile(lead_id: int, db: Client = Depends(get_db), admin: dict = Depends(get_current_admin)):
     """Return the full lead profile: contact info, form submissions, behavioral timeline, and notes."""
     # Lead contact details
     lead_res = db.table("leads").select("*").eq("id", lead_id).execute()

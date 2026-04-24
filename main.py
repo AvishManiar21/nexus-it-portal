@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from app.routers import products, events, rfd, auth, leads
 import os
 from dotenv import load_dotenv
@@ -18,9 +19,15 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["Content-Type", "Authorization", "Cookie"],
+    expose_headers=["Set-Cookie"],
 )
+
+# Add TrustedHost middleware in production to prevent host header attacks
+if os.getenv("NODE_ENV") == "production":
+    allowed_hosts = [os.getenv("BACKEND_DOMAIN", "*")]
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 
 # Include routers
 app.include_router(products.router)
