@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
   },
-  // Security headers for production
+  // Security headers applied to all environments
   async headers() {
     return [
       {

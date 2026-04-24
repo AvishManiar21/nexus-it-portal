@@ -26,7 +26,13 @@ app.add_middleware(
 
 # Add TrustedHost middleware in production to prevent host header attacks
 if os.getenv("NODE_ENV") == "production":
-    allowed_hosts = [os.getenv("BACKEND_DOMAIN", "*")]
+    backend_domain = os.getenv("BACKEND_DOMAIN")
+    if not backend_domain:
+        raise RuntimeError(
+            "BACKEND_DOMAIN environment variable is required in production. "
+            "Set it to your backend domain (e.g., 'api.example.com') to prevent host header attacks."
+        )
+    allowed_hosts = [backend_domain]
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 
 # Include routers

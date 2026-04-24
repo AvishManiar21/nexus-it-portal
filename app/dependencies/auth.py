@@ -8,7 +8,12 @@ from jose import jwt, JWTError
 import os
 
 # Session secret must match the Next.js SESSION_SECRET
-SESSION_SECRET = os.getenv("SESSION_SECRET", "nexus-it-session-secret-change-me")
+SESSION_SECRET = os.getenv("SESSION_SECRET")
+if not SESSION_SECRET:
+    raise RuntimeError(
+        "SESSION_SECRET environment variable is required for JWT authentication. "
+        "Please set it in your .env file to match the Next.js session secret."
+    )
 
 
 async def get_current_admin(session: Optional[str] = Cookie(None)) -> dict:
@@ -39,7 +44,8 @@ async def get_current_admin(session: Optional[str] = Cookie(None)) -> dict:
         )
 
         # Extract admin information from the payload
-        admin_id = payload.get("id")
+        # Next.js session uses "userId" key (see app/lib/session.ts)
+        admin_id = payload.get("userId")
         admin_email = payload.get("email")
 
         if not admin_id or not admin_email:

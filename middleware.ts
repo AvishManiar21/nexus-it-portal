@@ -5,14 +5,14 @@ export function middleware(request: NextRequest) {
   const response = NextResponse.next()
 
   // HTTPS redirect in production
+  // Use request.nextUrl instead of raw Host header to prevent open redirect attacks
   if (
     process.env.NODE_ENV === 'production' &&
     request.headers.get('x-forwarded-proto') !== 'https'
   ) {
-    return NextResponse.redirect(
-      `https://${request.headers.get('host')}${request.nextUrl.pathname}${request.nextUrl.search}`,
-      301
-    )
+    const httpsUrl = new URL(request.nextUrl)
+    httpsUrl.protocol = 'https'
+    return NextResponse.redirect(httpsUrl.toString(), 301)
   }
 
   // Security headers
