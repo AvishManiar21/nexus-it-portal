@@ -421,18 +421,25 @@ def get_contact_messages(admin: dict = Depends(get_current_admin)):
 @router.get("/")
 def get_leads(
     search: Optional[str] = Query(None, description="Search by company, contact name, or email"),
+    status_filter: Optional[str] = Query(None, description="Filter by status: new, contacted, converted, or all"),
     sort_by: Optional[str] = Query("created_at", description="Column to sort by"),
     sort_order: Optional[str] = Query("desc", description="Sort order: asc or desc"),
     db: Client = Depends(get_db),
     admin: dict = Depends(get_current_admin),
 ):
-    """Return all leads with optional search and sort (requires authentication)"""
+    """Return all leads with optional search, status filter, and sort (requires authentication)"""
     if sort_by not in SORTABLE_COLUMNS:
         sort_by = "created_at"
     if sort_order not in ("asc", "desc"):
         sort_order = "desc"
 
     query = db.table("leads").select("id, name, email, company, status, created_at")
+
+    # Apply status filter if provided and not "all"
+    if status_filter and status_filter.lower() != "all":
+        allowed_statuses = {"new", "contacted", "converted"}
+        if status_filter.lower() in allowed_statuses:
+            query = query.eq("status", status_filter.lower())
 
     if search and search.strip():
         term = search.strip()
