@@ -27,6 +27,7 @@ export default function LeadTable() {
   const router = useRouter();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState<SortColumn>("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [loading, setLoading] = useState(true);
@@ -35,11 +36,14 @@ export default function LeadTable() {
     setLoading(true);
     const params = new URLSearchParams();
     if (search.trim()) params.set("search", search.trim());
+    if (statusFilter !== "all") params.set("status_filter", statusFilter);
     params.set("sort_by", sortBy);
     params.set("sort_order", sortOrder);
 
     try {
-      const res = await fetch(`${API_URL}/leads/?${params.toString()}`);
+      const res = await fetch(`${API_URL}/leads/?${params.toString()}`, {
+        credentials: "include"
+      });
       if (res.ok) {
         const data = await res.json();
         setLeads(data);
@@ -49,7 +53,7 @@ export default function LeadTable() {
     } finally {
       setLoading(false);
     }
-  }, [search, sortBy, sortOrder]);
+  }, [search, statusFilter, sortBy, sortOrder]);
 
   useEffect(() => {
     const debounce = setTimeout(() => {
@@ -90,14 +94,24 @@ export default function LeadTable() {
 
   return (
     <div>
-      <div className="mb-6">
+      <div className="mb-6 flex gap-4 flex-wrap">
         <input
           type="text"
           placeholder="Search by company, contact person, or email..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full max-w-md px-4 py-2.5 border border-zinc-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:border-zinc-600 dark:text-white dark:placeholder-zinc-400"
+          className="flex-1 min-w-[250px] max-w-md px-4 py-2.5 border border-zinc-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:border-zinc-600 dark:text-white dark:placeholder-zinc-400"
         />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="px-4 py-2.5 border border-zinc-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-800 dark:border-zinc-600 dark:text-white cursor-pointer"
+        >
+          <option value="all">All Statuses</option>
+          <option value="new">New</option>
+          <option value="contacted">Contacted</option>
+          <option value="converted">Converted</option>
+        </select>
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-700">
