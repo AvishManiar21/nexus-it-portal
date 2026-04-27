@@ -29,6 +29,15 @@ FROM_EMAIL = os.getenv("FROM_EMAIL", SMTP_USERNAME)
 SORTABLE_COLUMNS = {"name", "email", "company", "status", "created_at"}
 
 # Pydantic models
+class LeadNote(BaseModel):
+    note: str
+
+    @validator("note")
+    def note_not_empty(cls, v):
+        if not v or not v.strip():
+            raise ValueError("Note cannot be empty")
+        return v.strip()
+
 class RFDSubmission(BaseModel):
     company: str
     contactPerson: str
@@ -520,4 +529,42 @@ async def get_lead_profile(lead_id: int, db: Client = Depends(get_db), admin: di
             }
             for n in (notes_res.data or [])
         ],
+    }
+
+
+@router.post("/{lead_id}/notes")
+async def create_lead_note(
+    lead_id: int,
+    note_data: LeadNote,
+    db: Client = Depends(get_db),
+    admin: dict = Depends(get_current_admin),
+):
+    """Create a new note on a lead profile (requires authentication)"""
+    # Verify lead exists
+    lead_res = db.table("leads").select("id").eq("id", lead_id).execute()
+    if not lead_res.data:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    # Create note
+    note_res = db.table("lead_notes").insert({
+        "lead_id": lead_id,
+        "admin_id": admin["id"],
+        "note": note_data.note,
+    }).execute()
+
+    if not note_res.data:
+        raise HTTPException(status_code=500, detail="Failed to create note")
+
+    # Return created note with admin name
+    note_with_admin = db.table("lead_notes").select(
+        "id, note, created_at, admin_users(name)"
+    ).eq("id", note_res.data[0]["id"]).execute()
+
+    created_note = note_with_admin.data[0] if note_with_admin.data else note_res.data[0]
+
+    return {
+        "id": created_note["id"],
+        "note": created_note["note"],
+        "author": created_note.get("admin_users", {}).get("name", "Unknown") if isinstance(created_note.get("admin_users"), dict) else "Unknown",
+        "created_at": created_note["created_at"],
     }

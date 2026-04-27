@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { fetchLeadProfile } from "@/lib/api";
+import LeadNotes from "@/components/LeadNotes";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -269,29 +270,7 @@ export default async function LeadProfilePage({ params }: Props) {
         </div>
 
         {/* Internal Notes */}
-        <div className="bg-white dark:bg-zinc-900 rounded-lg shadow">
-          <div className="p-4 border-b border-gray-200 dark:border-zinc-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Internal Notes
-            </h2>
-          </div>
-          {notes.length === 0 ? (
-            <div className="p-4 text-sm text-gray-500">No notes yet</div>
-          ) : (
-            <div className="divide-y divide-gray-100 dark:divide-zinc-800">
-              {notes.map((note) => (
-                <div key={note.id} className="p-4">
-                  <p className="text-sm text-gray-900 dark:text-zinc-300 whitespace-pre-wrap">
-                    {note.note}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-2">
-                    {note.author} &middot; {formatDateTime(note.created_at)}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <LeadNotes leadId={lead.id} initialNotes={notes} />
       </div>
     </div>
   );
