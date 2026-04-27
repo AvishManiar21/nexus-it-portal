@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Query, status
-from pydantic import BaseModel, EmailStr, validator, field_validator
+from pydantic import BaseModel, EmailStr, field_validator
 from supabase import Client
 from typing import List, Optional
 import os
@@ -49,32 +49,37 @@ class RFDSubmission(BaseModel):
     message: Optional[str] = None
     session_id: Optional[str] = None
 
-    @validator("company")
-    def company_not_empty(cls, v):
+    @field_validator("company")
+    @classmethod
+    def company_not_empty(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError("Company name is required")
         return v
 
-    @validator("contactPerson")
-    def contact_person_not_empty(cls, v):
+    @field_validator("contactPerson")
+    @classmethod
+    def contact_person_not_empty(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError("Contact person name is required")
         return v
 
-    @validator("phone")
-    def phone_not_empty(cls, v):
+    @field_validator("phone")
+    @classmethod
+    def phone_not_empty(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError("Phone number is required")
         return v
 
-    @validator("budget")
-    def budget_not_empty(cls, v):
+    @field_validator("budget")
+    @classmethod
+    def budget_not_empty(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError("Budget range is required")
         return v
 
-    @validator("products")
-    def products_not_empty(cls, v):
+    @field_validator("products")
+    @classmethod
+    def products_not_empty(cls, v: List[str]) -> List[str]:
         if not v or len(v) == 0:
             raise ValueError("Please select at least one product")
         return v
@@ -104,46 +109,53 @@ class ContactSubmission(BaseModel):
     message: str
     session_id: Optional[str] = None
 
-    @validator("name")
-    def name_required(cls, v):
+    @field_validator("name")
+    @classmethod
+    def name_required(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError("Name is required")
         return v
 
-    @validator("email")
-    def email_required(cls, v):
+    @field_validator("email")
+    @classmethod
+    def email_required(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError("Email is required")
         if "@" not in v:
             raise ValueError("Invalid email address")
         return v
 
-    @validator("subject")
-    def subject_required(cls, v):
+    @field_validator("subject")
+    @classmethod
+    def subject_required(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError("Subject is required")
         return v
 
-    @validator("company")
-    def company_required(cls, v):
+    @field_validator("company")
+    @classmethod
+    def company_required(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError("Company name is required")
         return v
 
-    @validator("phone")
-    def phone_required(cls, v):
+    @field_validator("phone")
+    @classmethod
+    def phone_required(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError("Phone is required")
         return v
 
-    @validator("budget")
-    def budget_required(cls, v):
+    @field_validator("budget")
+    @classmethod
+    def budget_required(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError("Budget range is required")
         return v
 
-    @validator("message")
-    def message_required(cls, v):
+    @field_validator("message")
+    @classmethod
+    def message_required(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError("Message is required")
         return v
