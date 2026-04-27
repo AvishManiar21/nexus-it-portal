@@ -14,6 +14,16 @@ const publicRoutes = ["/admin/login"];
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
+  // HTTPS redirect in production
+  if (
+    process.env.NODE_ENV === "production" &&
+    request.headers.get("x-forwarded-proto") !== "https"
+  ) {
+    const httpsUrl = new URL(request.nextUrl);
+    httpsUrl.protocol = "https";
+    return NextResponse.redirect(httpsUrl.toString(), 301);
+  }
+
   // Allow public routes (login page)
   const isPublicRoute = publicRoutes.some((route) => path === route);
   const isProtectedRoute = protectedRoutes.some(
@@ -30,6 +40,14 @@ export async function proxy(request: NextRequest) {
         path: "/",
       });
     }
+    // Apply security headers
+    response.headers.set("X-Frame-Options", "DENY");
+    response.headers.set("X-Content-Type-Options", "nosniff");
+    response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+    response.headers.set(
+      "Permissions-Policy",
+      "camera=(), microphone=(), geolocation=()"
+    );
     return response;
   }
 
@@ -66,6 +84,14 @@ export async function proxy(request: NextRequest) {
       sameSite: "lax",
       path: "/",
     });
+    // Apply security headers
+    response.headers.set("X-Frame-Options", "DENY");
+    response.headers.set("X-Content-Type-Options", "nosniff");
+    response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+    response.headers.set(
+      "Permissions-Policy",
+      "camera=(), microphone=(), geolocation=()"
+    );
     return response;
   } catch {
     // Expired or invalid session — clear cookie and redirect to login
