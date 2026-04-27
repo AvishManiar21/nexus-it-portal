@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Query, status
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, validator, field_validator
 from supabase import Client
 from typing import List, Optional
 import os
@@ -32,8 +32,9 @@ SORTABLE_COLUMNS = {"name", "email", "company", "status", "created_at"}
 class LeadNote(BaseModel):
     note: str
 
-    @validator("note")
-    def note_not_empty(cls, v):
+    @field_validator("note")
+    @classmethod
+    def note_not_empty(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError("Note cannot be empty")
         return v.strip()
