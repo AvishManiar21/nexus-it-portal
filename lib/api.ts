@@ -88,6 +88,13 @@ export interface LeadProfile {
     created_at: string;
     author: string;
   }[];
+  status_history: {
+    id: number;
+    old_status: string;
+    new_status: string;
+    changed_by: string;
+    created_at: string;
+  }[];
 }
 
 export async function fetchLeadProfile(id: number): Promise<LeadProfile | null> {

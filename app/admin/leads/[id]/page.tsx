@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { fetchLeadProfile } from "@/lib/api";
 import LeadNotes from "@/components/LeadNotes";
+import LeadStatusSelector from "@/components/LeadStatusSelector";
+import LeadStatusHistory from "@/components/LeadStatusHistory";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -55,7 +57,7 @@ export default async function LeadProfilePage({ params }: Props) {
     notFound();
   }
 
-  const { lead, rfd_submissions, contact_messages, timeline, notes } = profile;
+  const { lead, rfd_submissions, contact_messages, timeline, notes, status_history } = profile;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-zinc-950 dark:to-zinc-900 p-8">
@@ -83,13 +85,10 @@ export default async function LeadProfilePage({ params }: Props) {
                 </p>
               )}
             </div>
-            <span
-              className={`inline-block px-3 py-1 rounded-full text-xs font-medium capitalize ${
-                STATUS_COLORS[lead.status] || "bg-zinc-100 text-zinc-800"
-              }`}
-            >
-              {lead.status}
-            </span>
+            <LeadStatusSelector
+              leadId={lead.id}
+              currentStatus={lead.status}
+            />
           </div>
 
           {/* Contact Details */}
@@ -268,6 +267,9 @@ export default async function LeadProfilePage({ params }: Props) {
             </div>
           )}
         </div>
+
+        {/* Status Change History */}
+        <LeadStatusHistory statusHistory={status_history || []} />
 
         {/* Internal Notes */}
         <LeadNotes leadId={lead.id} initialNotes={notes} />
