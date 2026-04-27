@@ -45,7 +45,7 @@ class LeadStatusUpdate(BaseModel):
     @field_validator("status")
     @classmethod
     def status_valid(cls, v: str) -> str:
-        allowed_statuses = {"new", "contacted", "converted"}
+        allowed_statuses = ("new", "contacted", "converted")
         if v.lower() not in allowed_statuses:
             raise ValueError(f"Status must be one of: {', '.join(allowed_statuses)}")
         return v.lower()
@@ -630,7 +630,8 @@ async def update_lead_status(
         raise HTTPException(status_code=404, detail="Lead not found")
 
     current_lead = lead_res.data[0]
-    old_status = current_lead["status"]
+    # Normalize NULL status to "new" for audit trail consistency
+    old_status = current_lead["status"] or "new"
     new_status = status_update.status
 
     # Don't create audit log if status hasn't changed
