@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 interface LeadStatusSelectorProps {
   leadId: number;
@@ -13,9 +14,11 @@ export default function LeadStatusSelector({
   currentStatus,
   onStatusChange,
 }: LeadStatusSelectorProps) {
+  const router = useRouter();
   const [status, setStatus] = useState(currentStatus);
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState("");
+  const previousStatusRef = useRef(currentStatus);
 
   const statuses = [
     { value: "new", label: "New", color: "bg-blue-100 text-blue-800" },
@@ -27,6 +30,10 @@ export default function LeadStatusSelector({
     const newStatus = e.target.value;
 
     if (newStatus === status) return;
+
+    // Store current status before attempting update
+    const oldStatus = status;
+    previousStatusRef.current = oldStatus;
 
     setIsUpdating(true);
     setError("");
@@ -50,15 +57,19 @@ export default function LeadStatusSelector({
 
       const data = await response.json();
       setStatus(data.status);
+      previousStatusRef.current = data.status;
 
       if (onStatusChange) {
         onStatusChange(data.status);
       }
+
+      // Refresh server components to show updated status history
+      router.refresh();
     } catch (err) {
       setError("Failed to update status. Please try again.");
       console.error("Error updating status:", err);
-      // Revert to original status on error
-      setStatus(currentStatus);
+      // Revert to previous known-good status on error
+      setStatus(previousStatusRef.current);
     } finally {
       setIsUpdating(false);
     }
