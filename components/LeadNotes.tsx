@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 
 interface Note {
   id: number;
@@ -30,7 +30,7 @@ export default function LeadNotes({ leadId, initialNotes }: LeadNotesProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!newNote.trim()) {
@@ -59,7 +59,7 @@ export default function LeadNotes({ leadId, initialNotes }: LeadNotesProps) {
       }
 
       const createdNote = await response.json();
-      setNotes([createdNote, ...notes]); // Add new note at the top
+      setNotes((prevNotes) => [createdNote, ...prevNotes]); // Add new note at the top
       setNewNote(""); // Clear the textarea
     } catch (err) {
       setError("Failed to save note. Please try again.");
