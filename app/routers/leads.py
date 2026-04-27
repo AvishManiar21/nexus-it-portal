@@ -436,10 +436,15 @@ def get_leads(
     query = db.table("leads").select("id, name, email, company, status, created_at")
 
     # Apply status filter if provided and not "all"
-    if status_filter and status_filter.lower() != "all":
-        allowed_statuses = {"new", "contacted", "converted"}
-        if status_filter.lower() in allowed_statuses:
-            query = query.eq("status", status_filter.lower())
+    if status_filter and status_filter.lower().strip() != "all":
+        allowed_statuses = ("new", "contacted", "converted")
+        normalized_filter = status_filter.lower().strip()
+        if normalized_filter not in allowed_statuses:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid status_filter. Must be one of: {', '.join(allowed_statuses)}, or 'all'"
+            )
+        query = query.eq("status", normalized_filter)
 
     if search and search.strip():
         term = search.strip()
