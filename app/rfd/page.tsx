@@ -1,26 +1,12 @@
 "use client"
 
 import { useState, ChangeEvent, FormEvent } from "react"
-
-interface FormData {
-  company: string
-  contactPerson: string
-  email: string
-  phone: string
-  budget: string
-  products: string[]
-  message: string
-}
-
-interface FormErrors {
-  company?: string
-  contactPerson?: string
-  email?: string
-  phone?: string
-  budget?: string
-  products?: string
-  message?: string
-}
+import {
+  FRIENDLY_SUBMISSION_ERROR_MESSAGE,
+  type RfdFormData as FormData,
+  type RfdFormErrors as FormErrors,
+  validateRfdForm,
+} from "@/app/lib/formValidation"
 
 const PRODUCT_OPTIONS = [
   "Cloud Services",
@@ -55,6 +41,10 @@ export default function RfdPage() {
       ...prev,
       [name]: value
     }))
+
+    if (errorMessage) {
+      setErrorMessage("")
+    }
     
     if (errors[name as keyof FormErrors]) {
       setErrors(prev => ({
@@ -74,6 +64,10 @@ export default function RfdPage() {
         products: newProducts
       }
     })
+
+    if (errorMessage) {
+      setErrorMessage("")
+    }
     
     if (errors.products) {
       setErrors(prev => ({
@@ -84,34 +78,7 @@ export default function RfdPage() {
   }
 
   const validateForm = (): boolean => {
-    const newErrors: FormErrors = {}
-
-    if (!formData.company.trim()) {
-      newErrors.company = "Company name is required"
-    }
-
-    if (!formData.contactPerson.trim()) {
-      newErrors.contactPerson = "Contact person is required"
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required"
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address"
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone is required"
-    }
-
-    if (!formData.budget) {
-      newErrors.budget = "Budget range is required"
-    }
-
-    if (formData.products.length === 0) {
-      newErrors.products = "Please select at least one product"
-    }
-
+    const newErrors = validateRfdForm(formData)
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -141,7 +108,7 @@ export default function RfdPage() {
         const data = await response.json()
 
         if (!response.ok) {
-          setErrorMessage(data.detail || "Failed to submit form. Please try again.")
+          setErrorMessage(FRIENDLY_SUBMISSION_ERROR_MESSAGE)
           return
         }
 
@@ -162,7 +129,7 @@ export default function RfdPage() {
           setSuccessMessage("")
         }, 5000)
       } catch (error) {
-        setErrorMessage("An error occurred while submitting the form. Please try again.")
+        setErrorMessage(FRIENDLY_SUBMISSION_ERROR_MESSAGE)
         console.error("Submission error:", error)
       } finally {
         setIsLoading(false)
@@ -181,6 +148,7 @@ export default function RfdPage() {
       message: ""
     })
     setErrors({})
+    setErrorMessage("")
   }
 
   return (
@@ -199,7 +167,7 @@ export default function RfdPage() {
           )}
 
           {errorMessage && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div role="alert" className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-red-800 font-medium">{errorMessage}</p>
             </div>
           )}
@@ -216,13 +184,15 @@ export default function RfdPage() {
                 name="company"
                 value={formData.company}
                 onChange={handleInputChange}
+                aria-invalid={Boolean(errors.company)}
+                aria-describedby={errors.company ? "company-error" : undefined}
                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
                   errors.company ? "border-red-500 focus:ring-red-500" : "border-gray-300"
                 }`}
                 placeholder="Enter your company name"
               />
               {errors.company && (
-                <p className="text-red-500 text-sm mt-1">{errors.company}</p>
+                <p id="company-error" className="text-red-500 text-sm mt-1">{errors.company}</p>
               )}
             </div>
 
@@ -237,13 +207,15 @@ export default function RfdPage() {
                 name="contactPerson"
                 value={formData.contactPerson}
                 onChange={handleInputChange}
+                aria-invalid={Boolean(errors.contactPerson)}
+                aria-describedby={errors.contactPerson ? "contactPerson-error" : undefined}
                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
                   errors.contactPerson ? "border-red-500 focus:ring-red-500" : "border-gray-300"
                 }`}
                 placeholder="Enter your full name"
               />
               {errors.contactPerson && (
-                <p className="text-red-500 text-sm mt-1">{errors.contactPerson}</p>
+                <p id="contactPerson-error" className="text-red-500 text-sm mt-1">{errors.contactPerson}</p>
               )}
             </div>
 
@@ -258,13 +230,15 @@ export default function RfdPage() {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
+                aria-invalid={Boolean(errors.email)}
+                aria-describedby={errors.email ? "email-error" : undefined}
                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
                   errors.email ? "border-red-500 focus:ring-red-500" : "border-gray-300"
                 }`}
                 placeholder="Enter your email address"
               />
               {errors.email && (
-                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                <p id="email-error" className="text-red-500 text-sm mt-1">{errors.email}</p>
               )}
             </div>
 
@@ -279,13 +253,15 @@ export default function RfdPage() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
+                aria-invalid={Boolean(errors.phone)}
+                aria-describedby={errors.phone ? "phone-error" : undefined}
                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
                   errors.phone ? "border-red-500 focus:ring-red-500" : "border-gray-300"
                 }`}
                 placeholder="Enter your phone number"
               />
               {errors.phone && (
-                <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                <p id="phone-error" className="text-red-500 text-sm mt-1">{errors.phone}</p>
               )}
             </div>
 
@@ -299,6 +275,8 @@ export default function RfdPage() {
                 name="budget"
                 value={formData.budget}
                 onChange={handleInputChange}
+                aria-invalid={Boolean(errors.budget)}
+                aria-describedby={errors.budget ? "budget-error" : undefined}
                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
                   errors.budget ? "border-red-500 focus:ring-red-500" : "border-gray-300"
                 }`}
@@ -310,7 +288,7 @@ export default function RfdPage() {
                 <option value="Over $100,000">Over $100,000</option>
               </select>
               {errors.budget && (
-                <p className="text-red-500 text-sm mt-1">{errors.budget}</p>
+                <p id="budget-error" className="text-red-500 text-sm mt-1">{errors.budget}</p>
               )}
             </div>
 
@@ -319,7 +297,13 @@ export default function RfdPage() {
               <label className="block text-sm font-medium text-gray-700 mb-3">
                 Products of Interest <span className="text-red-500">*</span>
               </label>
-              <div className="space-y-2">
+              <div
+                aria-invalid={Boolean(errors.products)}
+                aria-describedby={errors.products ? "products-error" : undefined}
+                className={`space-y-2 rounded-lg border p-3 ${
+                  errors.products ? "border-red-500" : "border-transparent"
+                }`}
+              >
                 {PRODUCT_OPTIONS.map(product => (
                   <label key={product} className="flex items-center">
                     <input
@@ -333,7 +317,7 @@ export default function RfdPage() {
                 ))}
               </div>
               {errors.products && (
-                <p className="text-red-500 text-sm mt-1">{errors.products}</p>
+                <p id="products-error" className="text-red-500 text-sm mt-1">{errors.products}</p>
               )}
             </div>
 

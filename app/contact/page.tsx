@@ -1,26 +1,12 @@
 "use client"
 
 import { useState, ChangeEvent, FormEvent } from "react"
-
-interface FormData {
-  name: string
-  email: string
-  company: string
-  phone: string
-  budget: string
-  subject: string
-  message: string
-}
-
-interface FormErrors {
-  name?: string
-  email?: string
-  company?: string
-  phone?: string
-  budget?: string
-  subject?: string
-  message?: string
-}
+import {
+  FRIENDLY_SUBMISSION_ERROR_MESSAGE,
+  type ContactFormData as FormData,
+  type ContactFormErrors as FormErrors,
+  validateContactForm,
+} from "@/app/lib/formValidation"
 
 const BUDGET_OPTIONS = [
   "$1,000 - $5,000",
@@ -55,6 +41,10 @@ export default function ContactPage() {
       ...prev,
       [name]: value
     }))
+
+    if (errorMessage) {
+      setErrorMessage("")
+    }
     
     if (errors[name as keyof FormErrors]) {
       setErrors(prev => ({
@@ -65,38 +55,7 @@ export default function ContactPage() {
   }
 
   const validateForm = (): boolean => {
-    const newErrors: FormErrors = {}
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required"
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required"
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address"
-    }
-
-    if (!formData.company.trim()) {
-      newErrors.company = "Company name is required"
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone is required"
-    }
-
-    if (!formData.budget) {
-      newErrors.budget = "Budget range is required"
-    }
-
-    if (!formData.subject.trim()) {
-      newErrors.subject = "Subject is required"
-    }
-
-    if (!formData.message.trim()) {
-      newErrors.message = "Message is required"
-    }
-
+    const newErrors = validateContactForm(formData)
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -126,7 +85,7 @@ export default function ContactPage() {
         const data = await response.json()
 
         if (!response.ok) {
-          setErrorMessage(data.detail || "Failed to send message. Please try again.")
+          setErrorMessage(FRIENDLY_SUBMISSION_ERROR_MESSAGE)
           return
         }
 
@@ -145,7 +104,7 @@ export default function ContactPage() {
           setSuccessMessage("")
         }, 5000)
       } catch (error) {
-        setErrorMessage("An error occurred while sending the message. Please try again.")
+        setErrorMessage(FRIENDLY_SUBMISSION_ERROR_MESSAGE)
         console.error("Submission error:", error)
       } finally {
         setIsLoading(false)
@@ -164,6 +123,7 @@ export default function ContactPage() {
       message: ""
     })
     setErrors({})
+    setErrorMessage("")
   }
 
   return (
@@ -172,7 +132,7 @@ export default function ContactPage() {
         <div className="bg-white rounded-lg shadow-lg p-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Contact Us</h1>
           <p className="text-gray-600 mb-8">
-            Have a question or feedback? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+            Have a question or feedback? We&apos;d love to hear from you. Send us a message and we&apos;ll respond as soon as possible.
           </p>
 
           {successMessage && (
@@ -182,7 +142,7 @@ export default function ContactPage() {
           )}
 
           {errorMessage && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div role="alert" className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-red-800 font-medium">{errorMessage}</p>
             </div>
           )}
@@ -199,13 +159,15 @@ export default function ContactPage() {
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
+                aria-invalid={Boolean(errors.name)}
+                aria-describedby={errors.name ? "name-error" : undefined}
                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
                   errors.name ? "border-red-500 focus:ring-red-500" : "border-gray-300"
                 }`}
                 placeholder="Enter your full name"
               />
               {errors.name && (
-                <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                <p id="name-error" className="text-red-500 text-sm mt-1">{errors.name}</p>
               )}
             </div>
 
@@ -220,13 +182,15 @@ export default function ContactPage() {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
+                aria-invalid={Boolean(errors.email)}
+                aria-describedby={errors.email ? "email-error" : undefined}
                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
                   errors.email ? "border-red-500 focus:ring-red-500" : "border-gray-300"
                 }`}
                 placeholder="Enter your email address"
               />
               {errors.email && (
-                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                <p id="email-error" className="text-red-500 text-sm mt-1">{errors.email}</p>
               )}
             </div>
 
@@ -241,13 +205,15 @@ export default function ContactPage() {
                 name="company"
                 value={formData.company}
                 onChange={handleInputChange}
+                aria-invalid={Boolean(errors.company)}
+                aria-describedby={errors.company ? "company-error" : undefined}
                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
                   errors.company ? "border-red-500 focus:ring-red-500" : "border-gray-300"
                 }`}
                 placeholder="Enter your company name"
               />
               {errors.company && (
-                <p className="text-red-500 text-sm mt-1">{errors.company}</p>
+                <p id="company-error" className="text-red-500 text-sm mt-1">{errors.company}</p>
               )}
             </div>
 
@@ -261,13 +227,15 @@ export default function ContactPage() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
+                aria-invalid={Boolean(errors.phone)}
+                aria-describedby={errors.phone ? "phone-error" : undefined}
                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
                   errors.phone ? "border-red-500 focus:ring-red-500" : "border-gray-300"
                 }`}
                 placeholder="Enter your phone number"
               />
               {errors.phone && (
-                <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                <p id="phone-error" className="text-red-500 text-sm mt-1">{errors.phone}</p>
               )}
             </div>
 
@@ -280,6 +248,8 @@ export default function ContactPage() {
                 name="budget"
                 value={formData.budget}
                 onChange={handleInputChange}
+                aria-invalid={Boolean(errors.budget)}
+                aria-describedby={errors.budget ? "budget-error" : undefined}
                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
                   errors.budget ? "border-red-500 focus:ring-red-500" : "border-gray-300"
                 }`}
@@ -292,7 +262,7 @@ export default function ContactPage() {
                 ))}
               </select>
               {errors.budget && (
-                <p className="text-red-500 text-sm mt-1">{errors.budget}</p>
+                <p id="budget-error" className="text-red-500 text-sm mt-1">{errors.budget}</p>
               )}
             </div>
 
@@ -306,13 +276,15 @@ export default function ContactPage() {
                 name="subject"
                 value={formData.subject}
                 onChange={handleInputChange}
+                aria-invalid={Boolean(errors.subject)}
+                aria-describedby={errors.subject ? "subject-error" : undefined}
                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
                   errors.subject ? "border-red-500 focus:ring-red-500" : "border-gray-300"
                 }`}
                 placeholder="What is this about?"
               />
               {errors.subject && (
-                <p className="text-red-500 text-sm mt-1">{errors.subject}</p>
+                <p id="subject-error" className="text-red-500 text-sm mt-1">{errors.subject}</p>
               )}
             </div>
 
@@ -327,13 +299,15 @@ export default function ContactPage() {
                 value={formData.message}
                 onChange={handleInputChange}
                 rows={5}
+                aria-invalid={Boolean(errors.message)}
+                aria-describedby={errors.message ? "message-error" : undefined}
                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition resize-none ${
                   errors.message ? "border-red-500 focus:ring-red-500" : "border-gray-300"
                 }`}
                 placeholder="Enter your message here..."
               />
               {errors.message && (
-                <p className="text-red-500 text-sm mt-1">{errors.message}</p>
+                <p id="message-error" className="text-red-500 text-sm mt-1">{errors.message}</p>
               )}
             </div>
 
