@@ -27,6 +27,7 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD") or os.getenv("SENDER_PASSWORD")
 FROM_EMAIL = os.getenv("FROM_EMAIL", SMTP_USERNAME)
 
 SORTABLE_COLUMNS = {"name", "email", "company", "status", "created_at"}
+ALLOWED_LEAD_STATUSES = ("new", "contacted", "converted")
 
 # Pydantic models
 class LeadNote(BaseModel):
@@ -45,9 +46,8 @@ class LeadStatusUpdate(BaseModel):
     @field_validator("status")
     @classmethod
     def status_valid(cls, v: str) -> str:
-        allowed_statuses = ("new", "contacted", "converted")
-        if v.lower() not in allowed_statuses:
-            raise ValueError(f"Status must be one of: {', '.join(allowed_statuses)}")
+        if v.lower() not in ALLOWED_LEAD_STATUSES:
+            raise ValueError(f"Status must be one of: {', '.join(ALLOWED_LEAD_STATUSES)}")
         return v.lower()
 
 class RFDSubmission(BaseModel):
@@ -436,15 +436,15 @@ def get_leads(
     query = db.table("leads").select("id, name, email, company, status, created_at")
 
     # Apply status filter if provided and not "all"
-    if status_filter and status_filter.lower().strip() != "all":
-        allowed_statuses = ("new", "contacted", "converted")
+    if status_filter:
         normalized_filter = status_filter.lower().strip()
-        if normalized_filter not in allowed_statuses:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid status_filter. Must be one of: {', '.join(allowed_statuses)}, or 'all'"
-            )
-        query = query.eq("status", normalized_filter)
+        if normalized_filter != "all":
+            if normalized_filter not in ALLOWED_LEAD_STATUSES:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid status_filter. Must be one of: {', '.join(ALLOWED_LEAD_STATUSES)}, or 'all'"
+                )
+            query = query.eq("status", normalized_filter)
 
     if search and search.strip():
         term = search.strip()
