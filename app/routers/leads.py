@@ -39,6 +39,17 @@ class LeadNote(BaseModel):
             raise ValueError("Note cannot be empty")
         return v.strip()
 
+class LeadStatusUpdate(BaseModel):
+    status: str
+
+    @field_validator("status")
+    @classmethod
+    def status_valid(cls, v: str) -> str:
+        allowed_statuses = {"new", "contacted", "converted"}
+        if v.lower() not in allowed_statuses:
+            raise ValueError(f"Status must be one of: {', '.join(allowed_statuses)}")
+        return v.lower()
+
 class RFDSubmission(BaseModel):
     company: str
     contactPerson: str
@@ -483,6 +494,11 @@ async def get_lead_profile(lead_id: int, db: Client = Depends(get_db), admin: di
         "id, note, created_at, admin_id, admin_users(name)"
     ).eq("lead_id", lead_id).order("created_at", desc=True).execute()
 
+    # Status change history with admin attribution
+    status_history_res = db.table("lead_status_audit").select(
+        "id, old_status, new_status, created_at, admin_users(name)"
+    ).eq("lead_id", lead_id).order("created_at", desc=True).execute()
+
     # Build a unified chronological timeline
     timeline = []
 
@@ -542,6 +558,16 @@ async def get_lead_profile(lead_id: int, db: Client = Depends(get_db), admin: di
             }
             for n in (notes_res.data or [])
         ],
+        "status_history": [
+            {
+                "id": s["id"],
+                "old_status": s["old_status"],
+                "new_status": s["new_status"],
+                "changed_by": (s.get("admin_users") or {}).get("name", "Unknown"),
+                "created_at": s["created_at"],
+            }
+            for s in (status_history_res.data or [])
+        ],
     }
 
 
@@ -580,4 +606,56 @@ async def create_lead_note(
         "note": created_note["note"],
         "author": created_note.get("admin_users", {}).get("name", "Unknown") if isinstance(created_note.get("admin_users"), dict) else "Unknown",
         "created_at": created_note["created_at"],
+    }
+
+
+@router.patch("/{lead_id}/status")
+async def update_lead_status(
+    lead_id: int,
+    status_update: LeadStatusUpdate,
+    db: Client = Depends(get_db),
+    admin: dict = Depends(get_current_admin),
+):
+    """Update lead status and create audit log entry (requires authentication)"""
+    # Get current lead status
+    lead_res = db.table("leads").select("id, status").eq("id", lead_id).execute()
+    if not lead_res.data:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    current_lead = lead_res.data[0]
+    old_status = current_lead["status"]
+    new_status = status_update.status
+
+    # Don't create audit log if status hasn't changed
+    if old_status == new_status:
+        return {
+            "id": lead_id,
+            "status": new_status,
+            "message": "Status unchanged"
+        }
+
+    # Update lead status
+    update_res = db.table("leads").update({
+        "status": new_status
+    }).eq("id", lead_id).execute()
+
+    if not update_res.data:
+        raise HTTPException(status_code=500, detail="Failed to update status")
+
+    # Create audit log entry
+    audit_res = db.table("lead_status_audit").insert({
+        "lead_id": lead_id,
+        "admin_id": admin["id"],
+        "old_status": old_status,
+        "new_status": new_status,
+    }).execute()
+
+    if not audit_res.data:
+        raise HTTPException(status_code=500, detail="Failed to create audit log")
+
+    return {
+        "id": lead_id,
+        "status": new_status,
+        "old_status": old_status,
+        "message": "Status updated successfully"
     }
