@@ -1,14 +1,25 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from app.routers import products, events, rfd, auth, leads, debug_db
+from app.routers import products, events, rfd, auth, leads, debug_db, analytics
+from app.db_pg import close_pool
 import os
 from dotenv import load_dotenv
 
 # Load env variables
 load_dotenv()
 
-app = FastAPI(title="Nexus IT Backend")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: nothing to do — the asyncpg pool is created lazily on first use.
+    yield
+    # Shutdown: close the asyncpg pool if it was opened.
+    await close_pool()
+
+
+app = FastAPI(title="Nexus IT Backend", lifespan=lifespan)
 
 # Configure CORS
 origins = [
@@ -42,6 +53,7 @@ app.include_router(rfd.router)
 app.include_router(auth.router)
 app.include_router(leads.router)
 app.include_router(debug_db.router)
+app.include_router(analytics.router)
 
 
 @app.get("/")
