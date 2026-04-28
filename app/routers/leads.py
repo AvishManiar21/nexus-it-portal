@@ -387,6 +387,192 @@ Log in to the admin portal to review and follow up.
     except Exception as e:
         print(f"Error sending admin RFD alert (lead {lead_id}): {str(e)}")
 
+
+def send_visitor_rfd_confirmation(
+    visitor_name: str,
+    visitor_email: str,
+    company: str,
+    products: List[str],
+) -> None:
+    """
+    Send confirmation email to visitor after RFD submission.
+    Failures are logged and swallowed -- must NEVER raise.
+    """
+    try:
+        if not SMTP_USERNAME or not SMTP_PASSWORD:
+            print("Warning: SMTP credentials not configured, skipping visitor RFD confirmation")
+            return
+
+        timestamp = datetime.utcnow().strftime("%B %d, %Y at %H:%M UTC")
+        products_str = ", ".join(products) if products else "General inquiry"
+        subject = "Thank You for Your Demo Request - Nexus IT"
+
+        text = f"""
+Dear {visitor_name},
+
+Thank you for your interest in Nexus IT solutions!
+
+We have received your request for a product demonstration for {company}. Our team will review your inquiry and contact you shortly to schedule a personalized demo.
+
+Products you're interested in:
+{products_str}
+
+What happens next?
+• Our sales team will review your request within 1 business day
+• We'll reach out to you via email or phone to schedule a convenient time for your demo
+• You'll receive a calendar invite with demo details
+
+If you have any immediate questions, feel free to reply to this email.
+
+Best regards,
+The Nexus IT Team
+
+---
+This confirmation was sent on {timestamp}
+        """.strip()
+
+        html = f"""
+<html>
+  <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
+    <div style="background-color: #2563eb; padding: 20px; text-align: center;">
+      <h1 style="color: white; margin: 0;">Nexus IT</h1>
+    </div>
+
+    <div style="padding: 30px; background-color: #f9fafb;">
+      <h2 style="color: #1f2937;">Thank You for Your Demo Request!</h2>
+
+      <p>Dear {visitor_name},</p>
+
+      <p>Thank you for your interest in Nexus IT solutions! We have received your request for a product demonstration for <strong>{company}</strong>.</p>
+
+      <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #2563eb; margin-top: 0;">Products you're interested in:</h3>
+        <p style="color: #4b5563;">{products_str}</p>
+      </div>
+
+      <h3 style="color: #1f2937;">What happens next?</h3>
+      <ul style="color: #4b5563; line-height: 1.8;">
+        <li>Our sales team will review your request within 1 business day</li>
+        <li>We'll reach out to you via email or phone to schedule a convenient time for your demo</li>
+        <li>You'll receive a calendar invite with demo details</li>
+      </ul>
+
+      <p>If you have any immediate questions, feel free to reply to this email.</p>
+
+      <p style="margin-top: 30px;">Best regards,<br><strong>The Nexus IT Team</strong></p>
+    </div>
+
+    <div style="background-color: #e5e7eb; padding: 15px; text-align: center; font-size: 12px; color: #6b7280;">
+      This confirmation was sent on {timestamp}
+    </div>
+  </body>
+</html>
+        """.strip()
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = FROM_EMAIL or SMTP_USERNAME
+        msg["To"] = visitor_email
+        msg.attach(MIMEText(text, "plain"))
+        msg.attach(MIMEText(html, "html"))
+
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.sendmail(SMTP_USERNAME, [visitor_email], msg.as_string())
+        server.quit()
+
+        print(f"RFD confirmation sent to visitor: {visitor_email}")
+    except Exception as e:
+        print(f"Error sending visitor RFD confirmation to {visitor_email}: {str(e)}")
+
+
+def send_visitor_contact_confirmation(
+    visitor_name: str,
+    visitor_email: str,
+    subject_line: str,
+) -> None:
+    """
+    Send confirmation email to visitor after Contact Us submission.
+    Failures are logged and swallowed -- must NEVER raise.
+    """
+    try:
+        if not SMTP_USERNAME or not SMTP_PASSWORD:
+            print("Warning: SMTP credentials not configured, skipping visitor contact confirmation")
+            return
+
+        timestamp = datetime.utcnow().strftime("%B %d, %Y at %H:%M UTC")
+        subject = "We've Received Your Message - Nexus IT"
+
+        text = f"""
+Dear {visitor_name},
+
+Thank you for reaching out to Nexus IT!
+
+We have received your message regarding: "{subject_line}"
+
+Our team will review your inquiry and respond within 1-2 business days. We appreciate your patience and look forward to assisting you.
+
+If your matter is urgent, please don't hesitate to call us directly.
+
+Best regards,
+The Nexus IT Team
+
+---
+This confirmation was sent on {timestamp}
+        """.strip()
+
+        html = f"""
+<html>
+  <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
+    <div style="background-color: #2563eb; padding: 20px; text-align: center;">
+      <h1 style="color: white; margin: 0;">Nexus IT</h1>
+    </div>
+
+    <div style="padding: 30px; background-color: #f9fafb;">
+      <h2 style="color: #1f2937;">We've Received Your Message!</h2>
+
+      <p>Dear {visitor_name},</p>
+
+      <p>Thank you for reaching out to Nexus IT!</p>
+
+      <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #2563eb; margin-top: 0;">Your Inquiry:</h3>
+        <p style="color: #4b5563;">"{subject_line}"</p>
+      </div>
+
+      <p>Our team will review your inquiry and respond within <strong>1-2 business days</strong>. We appreciate your patience and look forward to assisting you.</p>
+
+      <p>If your matter is urgent, please don't hesitate to call us directly.</p>
+
+      <p style="margin-top: 30px;">Best regards,<br><strong>The Nexus IT Team</strong></p>
+    </div>
+
+    <div style="background-color: #e5e7eb; padding: 15px; text-align: center; font-size: 12px; color: #6b7280;">
+      This confirmation was sent on {timestamp}
+    </div>
+  </body>
+</html>
+        """.strip()
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = FROM_EMAIL or SMTP_USERNAME
+        msg["To"] = visitor_email
+        msg.attach(MIMEText(text, "plain"))
+        msg.attach(MIMEText(html, "html"))
+
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.sendmail(SMTP_USERNAME, [visitor_email], msg.as_string())
+        server.quit()
+
+        print(f"Contact confirmation sent to visitor: {visitor_email}")
+    except Exception as e:
+        print(f"Error sending visitor contact confirmation to {visitor_email}: {str(e)}")
+
+
 @router.post("/submit-rfd", response_model=SubmissionResponse)
 async def submit_rfd(submission: RFDSubmission, background_tasks: BackgroundTasks):
     """
@@ -446,8 +632,14 @@ async def submit_rfd(submission: RFDSubmission, background_tasks: BackgroundTask
         except Exception as e:
             print(f"Error creating engagement log: {str(e)}")
 
-        # Send confirmation email (non-blocking)
-        send_confirmation_email(submission.email, submission.contactPerson, submission.company)
+        # Schedule visitor confirmation email as a background task (non-blocking)
+        background_tasks.add_task(
+            send_visitor_rfd_confirmation,
+            visitor_name=submission.contactPerson,
+            visitor_email=submission.email,
+            company=submission.company,
+            products=submission.products,
+        )
 
         # Schedule admin alert as a background task so the response is not delayed.
         # Failures inside the helper are swallowed, so the visitor's submission is unaffected.
@@ -477,7 +669,7 @@ async def submit_rfd(submission: RFDSubmission, background_tasks: BackgroundTask
 
 
 @router.post("/submit-contact")
-def submit_contact(submission: ContactSubmission):
+def submit_contact(submission: ContactSubmission, background_tasks: BackgroundTasks):
     """Submit a contact form"""
     try:
         # Upsert provides concurrency-safe create/update under simultaneous submissions.
@@ -521,8 +713,13 @@ def submit_contact(submission: ContactSubmission):
             except Exception as e:
                 print(f"Error linking anonymous activity: {str(e)}")
 
-        # Send confirmation email
-        send_contact_confirmation_email(submission.email, submission.name, submission.subject)
+        # Schedule visitor confirmation email as a background task (non-blocking)
+        background_tasks.add_task(
+            send_visitor_contact_confirmation,
+            visitor_name=submission.name,
+            visitor_email=submission.email,
+            subject_line=submission.subject,
+        )
 
         return {
             "message": "Your message has been received. We will get back to you soon.",
@@ -785,11 +982,6 @@ async def update_lead_status(
 
     if not update_res.data:
         raise HTTPException(status_code=500, detail="Failed to update status")
-
-    # Sync RFD submission statuses with lead status
-    db.table("rfd_submissions").update({
-        "status": new_status
-    }).eq("lead_id", lead_id).execute()
 
     # Create audit log entry
     audit_res = db.table("lead_status_audit").insert({
