@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Query, status
+from fastapi import APIRouter, HTTPException, Depends, Query, status, BackgroundTasks
 from pydantic import BaseModel, EmailStr, field_validator
 from supabase import Client
 from typing import List, Optional
@@ -303,8 +303,92 @@ def send_contact_confirmation_email(to_email: str, name: str, subject: str) -> b
         print(f"Error sending email: {e}")
         return False
 
+def send_admin_rfd_alert(
+    company: str,
+    contact_person: str,
+    contact_email: str,
+    phone: str,
+    products: List[str],
+    lead_id: int,
+) -> None:
+    """
+    Send notification email to all administrators about a new RFD submission.
+    Failures are logged and swallowed -- must NEVER raise.
+    """
+    try:
+        if not SMTP_USERNAME or not SMTP_PASSWORD:
+            print("Warning: SMTP credentials not configured, skipping admin RFD alert")
+            return
+
+        # Fetch all admin emails
+        admins_res = supabase.table("admin_users").select("email").execute()
+        admin_emails = [
+            row["email"] for row in (admins_res.data or [])
+            if row.get("email")
+        ]
+        if not admin_emails:
+            print("No admin recipients found for RFD alert; skipping")
+            return
+
+        timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+        products_str = ", ".join(products) if products else "(none)"
+        subject = f"[New RFD] {company} - {contact_person}"
+
+        text = f"""
+A new Request-for-Demo has been submitted on the Nexus IT portal.
+
+Company:        {company}
+Contact Person: {contact_person}
+Email:          {contact_email}
+Phone:          {phone}
+Products:       {products_str}
+Lead ID:        {lead_id}
+Submitted:      {timestamp}
+
+Log in to the admin portal to review and follow up.
+        """.strip()
+
+        html = f"""
+<html>
+  <body style="font-family: Arial, sans-serif; color: #333;">
+    <h2>New RFD Submission</h2>
+    <p>A new Request-for-Demo has been submitted on the Nexus IT portal.</p>
+    <table cellpadding="6" style="border-collapse: collapse;">
+      <tr><td><strong>Company</strong></td><td>{company}</td></tr>
+      <tr><td><strong>Contact Person</strong></td><td>{contact_person}</td></tr>
+      <tr><td><strong>Email</strong></td><td>{contact_email}</td></tr>
+      <tr><td><strong>Phone</strong></td><td>{phone}</td></tr>
+      <tr><td><strong>Products</strong></td><td>{products_str}</td></tr>
+      <tr><td><strong>Lead ID</strong></td><td>{lead_id}</td></tr>
+      <tr><td><strong>Submitted</strong></td><td>{timestamp}</td></tr>
+    </table>
+    <p>Log in to the admin portal to review and follow up.</p>
+  </body>
+</html>
+        """.strip()
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = FROM_EMAIL or SMTP_USERNAME
+        # Put admins in Bcc (single send) so individual recipients aren't disclosed to each other
+        # and we only pay one SMTP round-trip regardless of admin count.
+        msg["To"] = FROM_EMAIL or SMTP_USERNAME
+        msg["Bcc"] = ", ".join(admin_emails)
+        msg.attach(MIMEText(text, "plain"))
+        msg.attach(MIMEText(html, "html"))
+
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.sendmail(SMTP_USERNAME, admin_emails, msg.as_string())
+        server.quit()
+
+        print(f"Admin RFD alert sent to {len(admin_emails)} admin(s) for lead {lead_id}")
+    except Exception as e:
+        print(f"Error sending admin RFD alert (lead {lead_id}): {str(e)}")
+
 @router.post("/submit-rfd", response_model=SubmissionResponse)
-async def submit_rfd(submission: RFDSubmission):
+async def submit_rfd(submission: RFDSubmission, background_tasks: BackgroundTasks):
     """
     Submit RFD with transactional integrity:
     1. Create lead record
@@ -349,6 +433,18 @@ async def submit_rfd(submission: RFDSubmission):
 
         # Send confirmation email (non-blocking)
         send_confirmation_email(submission.email, submission.contactPerson, submission.company)
+
+        # Schedule admin alert as a background task so the response is not delayed.
+        # Failures inside the helper are swallowed, so the visitor's submission is unaffected.
+        background_tasks.add_task(
+            send_admin_rfd_alert,
+            company=submission.company,
+            contact_person=submission.contactPerson,
+            contact_email=submission.email,
+            phone=submission.phone,
+            products=submission.products,
+            lead_id=lead_id,
+        )
 
         return SubmissionResponse(
             success=True,

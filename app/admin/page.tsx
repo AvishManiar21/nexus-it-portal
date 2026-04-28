@@ -27,6 +27,23 @@ interface ContactMessage {
   created_at: string
 }
 
+interface DashboardMetrics {
+  total_leads: number
+  new_leads_this_week: number
+  most_viewed_product: {
+    product_id: number | null
+    name: string | null
+    view_count: number
+  }
+  completion_rates_by_product: Array<{
+    product_id: number
+    name: string
+    starts: number
+    completes: number
+    completion_rate: number
+  }>
+}
+
 const PYTHON_API_URL = process.env.NEXT_PUBLIC_PYTHON_API_URL || "http://localhost:8000"
 
 export default function AdminPage() {
@@ -35,6 +52,9 @@ export default function AdminPage() {
   const [contactMessages, setContactMessages] = useState<ContactMessage[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
+  const [metricsLoading, setMetricsLoading] = useState(true)
+  const [metricsError, setMetricsError] = useState("")
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -81,6 +101,30 @@ export default function AdminPage() {
     fetchData()
   }, [])
 
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        setMetricsLoading(true)
+        setMetricsError("")
+        const res = await fetch(`${PYTHON_API_URL}/analytics/dashboard`, {
+          credentials: "include",
+        })
+        if (!res.ok) {
+          throw new Error(`Request failed with status ${res.status}`)
+        }
+        const data: DashboardMetrics = await res.json()
+        setMetrics(data)
+      } catch (err) {
+        console.error("Error fetching analytics:", err)
+        setMetricsError("Failed to load analytics metrics")
+      } finally {
+        setMetricsLoading(false)
+      }
+    }
+
+    fetchMetrics()
+  }, [])
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
       <div className="max-w-7xl mx-auto">
@@ -116,21 +160,95 @@ export default function AdminPage() {
           </Link>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm font-medium text-gray-600">Total Leads</p>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{leads.length}</p>
+        {/* Analytics Overview */}
+        <div className="mb-8">
+          <div className="flex items-baseline justify-between mb-4">
+            <h2 className="text-2xl font-bold text-gray-900">Analytics Overview</h2>
+            {metricsError && (
+              <span className="text-sm text-red-600">{metricsError}</span>
+            )}
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm font-medium text-gray-600">Contact Messages</p>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{contactMessages.length}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm font-medium text-gray-600">New Messages</p>
-            <p className="text-3xl font-bold text-gray-900 mt-2">
-              {contactMessages.filter(m => m.status === "new").length}
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+            {/* Total Leads */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <p className="text-sm font-medium text-gray-600">Total Leads</p>
+              {metricsLoading ? (
+                <div className="mt-2 h-9 w-20 bg-gray-200 rounded animate-pulse" />
+              ) : (
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {metrics?.total_leads ?? 0}
+                </p>
+              )}
+            </div>
+
+            {/* New Leads (Last 7 Days) */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <p className="text-sm font-medium text-gray-600">New Leads (Last 7 Days)</p>
+              {metricsLoading ? (
+                <div className="mt-2 h-9 w-20 bg-gray-200 rounded animate-pulse" />
+              ) : (
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {metrics?.new_leads_this_week ?? 0}
+                </p>
+              )}
+            </div>
+
+            {/* Most-Viewed Product */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <p className="text-sm font-medium text-gray-600">Most-Viewed Product</p>
+              {metricsLoading ? (
+                <>
+                  <div className="mt-2 h-9 w-32 bg-gray-200 rounded animate-pulse" />
+                  <div className="mt-2 h-4 w-20 bg-gray-200 rounded animate-pulse" />
+                </>
+              ) : (
+                <>
+                  <p className="text-3xl font-bold text-gray-900 mt-2 truncate">
+                    {metrics?.most_viewed_product?.name ?? "—"}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {metrics?.most_viewed_product?.view_count ?? 0} views
+                  </p>
+                </>
+              )}
+            </div>
+
+            {/* Demo Completion Rate */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <p className="text-sm font-medium text-gray-600">Demo Completion Rate</p>
+              {metricsLoading ? (
+                <div className="mt-3 space-y-3">
+                  {[0, 1, 2].map((i) => (
+                    <div key={i}>
+                      <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+                      <div className="mt-1 h-2 w-full bg-gray-200 rounded animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              ) : metrics?.completion_rates_by_product?.length ? (
+                <div className="mt-3 space-y-3">
+                  {metrics.completion_rates_by_product.map((p) => {
+                    const pct = Math.round((p.completion_rate || 0) * 100)
+                    return (
+                      <div key={p.product_id}>
+                        <div className="flex justify-between text-sm text-gray-700">
+                          <span className="truncate pr-2">{p.name}</span>
+                          <span className="font-medium">{pct}%</span>
+                        </div>
+                        <div className="mt-1 h-2 w-full bg-gray-200 rounded overflow-hidden">
+                          <div
+                            className="h-2 bg-blue-500"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 mt-2">No demo data yet</p>
+              )}
+            </div>
           </div>
         </div>
 
