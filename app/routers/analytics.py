@@ -29,6 +29,47 @@ async def _fetch_new_leads_this_week(conn: asyncpg.Connection) -> int:
     )
 
 
+async def _fetch_total_contact_messages(conn: asyncpg.Connection) -> int:
+    return await conn.fetchval("SELECT COUNT(*) FROM contact_messages")
+
+
+async def _fetch_total_rfd_submissions(conn: asyncpg.Connection) -> int:
+    """Count leads that came from RFD Form (matches the table display)"""
+    return await conn.fetchval(
+        "SELECT COUNT(*) FROM leads WHERE source = 'RFD Form'"
+    )
+
+
+async def _fetch_conversion_rate(conn: asyncpg.Connection) -> float:
+    """Calculate percentage of leads that have been contacted or converted"""
+    row = await conn.fetchrow(
+        """
+        SELECT
+            COUNT(*) as total,
+            SUM(CASE WHEN status IN ('contacted', 'converted') THEN 1 ELSE 0 END) as converted
+        FROM leads
+        """
+    )
+    if row is None or int(row["total"]) == 0:
+        return 0.0
+    return float(row["converted"]) / float(row["total"])
+
+
+async def _fetch_leads_by_source(conn: asyncpg.Connection) -> List[Dict[str, Any]]:
+    """Get lead count breakdown by source"""
+    rows = await conn.fetch(
+        """
+        SELECT
+            COALESCE(source, 'Unknown') as source,
+            COUNT(*) as count
+        FROM leads
+        GROUP BY source
+        ORDER BY count DESC
+        """
+    )
+    return [{"source": row["source"], "count": int(row["count"])} for row in rows]
+
+
 async def _fetch_most_viewed_product(conn: asyncpg.Connection) -> Dict[str, Any]:
     row = await conn.fetchrow(
         """
@@ -106,13 +147,24 @@ async def get_dashboard(admin=Depends(get_current_admin)) -> Dict[str, Any]:
             async with pool.acquire() as conn:
                 return await fn(conn)
 
-        total_leads, new_leads_this_week, most_viewed_product, completion_rates = (
-            await asyncio.gather(
-                _with_conn(_fetch_total_leads),
-                _with_conn(_fetch_new_leads_this_week),
-                _with_conn(_fetch_most_viewed_product),
-                _with_conn(_fetch_completion_rates_by_product),
-            )
+        (
+            total_leads,
+            new_leads_this_week,
+            most_viewed_product,
+            completion_rates,
+            total_contact_messages,
+            total_rfd_submissions,
+            conversion_rate,
+            leads_by_source,
+        ) = await asyncio.gather(
+            _with_conn(_fetch_total_leads),
+            _with_conn(_fetch_new_leads_this_week),
+            _with_conn(_fetch_most_viewed_product),
+            _with_conn(_fetch_completion_rates_by_product),
+            _with_conn(_fetch_total_contact_messages),
+            _with_conn(_fetch_total_rfd_submissions),
+            _with_conn(_fetch_conversion_rate),
+            _with_conn(_fetch_leads_by_source),
         )
 
         return {
@@ -120,6 +172,10 @@ async def get_dashboard(admin=Depends(get_current_admin)) -> Dict[str, Any]:
             "new_leads_this_week": int(new_leads_this_week or 0),
             "most_viewed_product": most_viewed_product,
             "completion_rates_by_product": completion_rates,
+            "total_contact_messages": int(total_contact_messages or 0),
+            "total_rfd_submissions": int(total_rfd_submissions or 0),
+            "conversion_rate": float(conversion_rate or 0.0),
+            "leads_by_source": leads_by_source,
         }
     except asyncpg.PostgresError as e:
         print(f"[ANALYTICS] Query FAILED: {e}")

@@ -29,7 +29,7 @@ def run_migration():
             print("   Column doesn't exist. Please run this SQL in Supabase SQL Editor:")
             print("""
    ALTER TABLE public.visitor_page_views
-   ADD COLUMN lead_id integer REFERENCES client_leads(id) ON DELETE SET NULL;
+   ADD COLUMN lead_id integer REFERENCES leads(id) ON DELETE SET NULL;
             """)
         else:
             print(f"   Error: {e}")
@@ -46,7 +46,7 @@ def run_migration():
             print("   Column doesn't exist. Please run this SQL in Supabase SQL Editor:")
             print("""
    ALTER TABLE public.video_engagement_events
-   ADD COLUMN lead_id integer REFERENCES client_leads(id) ON DELETE SET NULL;
+   ADD COLUMN lead_id integer REFERENCES leads(id) ON DELETE SET NULL;
             """)
         else:
             print(f"   Error: {e}")

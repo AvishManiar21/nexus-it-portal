@@ -42,6 +42,13 @@ interface DashboardMetrics {
     completes: number
     completion_rate: number
   }>
+  total_contact_messages: number
+  total_rfd_submissions: number
+  conversion_rate: number
+  leads_by_source: Array<{
+    source: string
+    count: number
+  }>
 }
 
 const PYTHON_API_URL = process.env.NEXT_PUBLIC_PYTHON_API_URL || "http://localhost:8000"
@@ -101,27 +108,27 @@ export default function AdminPage() {
     fetchData()
   }, [])
 
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      try {
-        setMetricsLoading(true)
-        setMetricsError("")
-        const res = await fetch(`${PYTHON_API_URL}/analytics/dashboard`, {
-          credentials: "include",
-        })
-        if (!res.ok) {
-          throw new Error(`Request failed with status ${res.status}`)
-        }
-        const data: DashboardMetrics = await res.json()
-        setMetrics(data)
-      } catch (err) {
-        console.error("Error fetching analytics:", err)
-        setMetricsError("Failed to load analytics metrics")
-      } finally {
-        setMetricsLoading(false)
+  const fetchMetrics = async () => {
+    try {
+      setMetricsLoading(true)
+      setMetricsError("")
+      const res = await fetch(`${PYTHON_API_URL}/analytics/dashboard`, {
+        credentials: "include",
+      })
+      if (!res.ok) {
+        throw new Error(`Request failed with status ${res.status}`)
       }
+      const data: DashboardMetrics = await res.json()
+      setMetrics(data)
+    } catch (err) {
+      console.error("Error fetching analytics:", err)
+      setMetricsError("Failed to load analytics metrics")
+    } finally {
+      setMetricsLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchMetrics()
   }, [])
 
@@ -162,15 +169,24 @@ export default function AdminPage() {
 
         {/* Analytics Overview */}
         <div className="mb-8">
-          <div className="flex items-baseline justify-between mb-4">
+          <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-gray-900">Analytics Overview</h2>
-            {metricsError && (
-              <span className="text-sm text-red-600">{metricsError}</span>
-            )}
+            <div className="flex items-center gap-4">
+              {metricsError && (
+                <span className="text-sm text-red-600">{metricsError}</span>
+              )}
+              <button
+                onClick={fetchMetrics}
+                disabled={metricsLoading}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {metricsLoading ? "Refreshing..." : "Refresh"}
+              </button>
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             {/* Total Leads */}
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-6 min-h-[180px] flex flex-col">
               <p className="text-sm font-medium text-gray-600">Total Leads</p>
               {metricsLoading ? (
                 <div className="mt-2 h-9 w-20 bg-gray-200 rounded animate-pulse" />
@@ -182,7 +198,7 @@ export default function AdminPage() {
             </div>
 
             {/* New Leads (Last 7 Days) */}
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-6 min-h-[180px] flex flex-col">
               <p className="text-sm font-medium text-gray-600">New Leads (Last 7 Days)</p>
               {metricsLoading ? (
                 <div className="mt-2 h-9 w-20 bg-gray-200 rounded animate-pulse" />
@@ -194,7 +210,7 @@ export default function AdminPage() {
             </div>
 
             {/* Most-Viewed Product */}
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-6 min-h-[180px] flex flex-col">
               <p className="text-sm font-medium text-gray-600">Most-Viewed Product</p>
               {metricsLoading ? (
                 <>
@@ -203,7 +219,7 @@ export default function AdminPage() {
                 </>
               ) : (
                 <>
-                  <p className="text-3xl font-bold text-gray-900 mt-2 truncate">
+                  <p className="text-2xl font-bold text-gray-900 mt-2 break-words">
                     {metrics?.most_viewed_product?.name ?? "—"}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
@@ -214,7 +230,7 @@ export default function AdminPage() {
             </div>
 
             {/* Demo Completion Rate */}
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-6 min-h-[180px] flex flex-col">
               <p className="text-sm font-medium text-gray-600">Demo Completion Rate</p>
               {metricsLoading ? (
                 <div className="mt-3 space-y-3">
@@ -247,6 +263,71 @@ export default function AdminPage() {
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 mt-2">No demo data yet</p>
+              )}
+            </div>
+          </div>
+
+          {/* Second Row - Additional Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mt-6">
+            {/* Total Contact Messages */}
+            <div className="bg-white rounded-lg shadow p-6 min-h-[180px] flex flex-col">
+              <p className="text-sm font-medium text-gray-600">Contact Messages</p>
+              {metricsLoading ? (
+                <div className="mt-2 h-9 w-20 bg-gray-200 rounded animate-pulse" />
+              ) : (
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {metrics?.total_contact_messages ?? 0}
+                </p>
+              )}
+            </div>
+
+            {/* Total RFD Submissions */}
+            <div className="bg-white rounded-lg shadow p-6 min-h-[180px] flex flex-col">
+              <p className="text-sm font-medium text-gray-600">Demo Requests</p>
+              {metricsLoading ? (
+                <div className="mt-2 h-9 w-20 bg-gray-200 rounded animate-pulse" />
+              ) : (
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {metrics?.total_rfd_submissions ?? 0}
+                </p>
+              )}
+            </div>
+
+            {/* Conversion Rate */}
+            <div className="bg-white rounded-lg shadow p-6 min-h-[180px] flex flex-col">
+              <p className="text-sm font-medium text-gray-600">Lead Conversion Rate</p>
+              {metricsLoading ? (
+                <div className="mt-2 h-9 w-20 bg-gray-200 rounded animate-pulse" />
+              ) : (
+                <>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">
+                    {Math.round((metrics?.conversion_rate ?? 0) * 100)}%
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">Contacted or Converted</p>
+                </>
+              )}
+            </div>
+
+            {/* Leads by Source */}
+            <div className="bg-white rounded-lg shadow p-6 min-h-[180px] flex flex-col">
+              <p className="text-sm font-medium text-gray-600">Leads by Source</p>
+              {metricsLoading ? (
+                <div className="mt-3 space-y-2">
+                  {[0, 1].map((i) => (
+                    <div key={i} className="h-4 w-full bg-gray-200 rounded animate-pulse" />
+                  ))}
+                </div>
+              ) : metrics?.leads_by_source?.length ? (
+                <div className="mt-3 space-y-2">
+                  {metrics.leads_by_source.map((source) => (
+                    <div key={source.source} className="flex justify-between text-sm">
+                      <span className="text-gray-700">{source.source}</span>
+                      <span className="font-medium text-gray-900">{source.count}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 mt-2">No data yet</p>
               )}
             </div>
           </div>

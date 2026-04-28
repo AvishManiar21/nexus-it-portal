@@ -34,17 +34,7 @@ CREATE TABLE IF NOT EXISTS products (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. demo_sessions (FK -> leads, products)
-CREATE TABLE IF NOT EXISTS demo_sessions (
-    id SERIAL PRIMARY KEY,
-    lead_id INTEGER NOT NULL REFERENCES leads(id),
-    product_id INTEGER NOT NULL REFERENCES products(id),
-    scheduled_at TIMESTAMPTZ NOT NULL,
-    status VARCHAR(50) DEFAULT 'scheduled',
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 5. engagement_logs (FK -> leads)
+-- 4. engagement_logs (FK -> leads)
 CREATE TABLE IF NOT EXISTS engagement_logs (
     id SERIAL PRIMARY KEY,
     lead_id INTEGER NOT NULL REFERENCES leads(id),
@@ -85,8 +75,6 @@ CREATE TABLE IF NOT EXISTS contact_messages (
 );
 
 -- Create indexes for foreign keys
-CREATE INDEX IF NOT EXISTS idx_demo_sessions_lead_id ON demo_sessions(lead_id);
-CREATE INDEX IF NOT EXISTS idx_demo_sessions_product_id ON demo_sessions(product_id);
 CREATE INDEX IF NOT EXISTS idx_engagement_logs_lead_id ON engagement_logs(lead_id);
 CREATE INDEX IF NOT EXISTS idx_rfd_submissions_lead_id ON rfd_submissions(lead_id);
 CREATE INDEX IF NOT EXISTS idx_rfd_submissions_product_id ON rfd_submissions(product_id);
