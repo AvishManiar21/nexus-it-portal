@@ -8,6 +8,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
+import html
 
 from app.database import get_db
 from app.dependencies.auth import get_current_admin
@@ -208,100 +209,6 @@ def resolve_product_ids(product_names: List[str]) -> dict:
         resolved[name] = product_id
     return resolved
 
-def send_confirmation_email(email: str, contact_person: str, company: str) -> bool:
-    """Send confirmation email to visitor"""
-    try:
-        if not SMTP_USERNAME or not SMTP_PASSWORD:
-            print("Warning: SMTP credentials not configured, skipping email")
-            return False
-
-        # Create message
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = "Demo Request Confirmation - Nexus IT"
-        msg["From"] = SMTP_USERNAME
-        msg["To"] = email
-
-        # Create plain text and HTML versions
-        text = f"""
-Dear {contact_person},
-
-Thank you for submitting your demo request for Nexus IT solutions!
-
-We have received your request on behalf of {company} and will review your interest in our products.
-A member of our sales team will be in touch with you shortly at {email} to discuss your specific needs and schedule a demo.
-
-Best regards,
-Nexus IT Sales Team
-        """.strip()
-
-        html = f"""
-<html>
-  <body style="font-family: Arial, sans-serif; color: #333;">
-    <h2>Demo Request Confirmation</h2>
-    <p>Dear {contact_person},</p>
-    <p>Thank you for submitting your demo request for Nexus IT solutions!</p>
-    <p>We have received your request on behalf of <strong>{company}</strong> and will review your interest in our products.</p>
-    <p>A member of our sales team will be in touch with you shortly to discuss your specific needs and schedule a demo.</p>
-    <br/>
-    <p>Best regards,<br/>
-    <strong>Nexus IT Sales Team</strong></p>
-  </body>
-</html>
-        """.strip()
-
-        part1 = MIMEText(text, "plain")
-        part2 = MIMEText(html, "html")
-        msg.attach(part1)
-        msg.attach(part2)
-
-        # Send email
-        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
-        server.starttls()
-        server.login(SMTP_USERNAME, SMTP_PASSWORD)
-        server.sendmail(SMTP_USERNAME, email, msg.as_string())
-        server.quit()
-
-        print(f"Confirmation email sent to {email}")
-        return True
-    except Exception as e:
-        print(f"Error sending confirmation email: {str(e)}")
-        return False
-
-def send_contact_confirmation_email(to_email: str, name: str, subject: str) -> bool:
-    """Send confirmation email to contact form submitter"""
-    try:
-        if not SMTP_USERNAME or not SMTP_PASSWORD:
-            print("Warning: SMTP credentials not configured, skipping email")
-            return False
-
-        msg = MIMEMultipart()
-        msg["From"] = SMTP_USERNAME
-        msg["To"] = to_email
-        msg["Subject"] = "We received your message"
-
-        body = f"""
-        <html>
-            <body style="font-family: Arial, sans-serif;">
-                <p>Hi {name},</p>
-                <p>Thank you for contacting us. We received your message regarding <strong>{subject}</strong>.</p>
-                <p>Our team will review your message and get back to you soon.</p>
-                <br>
-                <p>Best regards,<br>
-                Our Team</p>
-            </body>
-        </html>
-        """
-
-        msg.attach(MIMEText(body, "html"))
-
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.starttls()
-            server.login(SMTP_USERNAME, SMTP_PASSWORD)
-            server.send_message(msg)
-        return True
-    except Exception as e:
-        print(f"Error sending email: {e}")
-        return False
 
 def send_admin_rfd_alert(
     company: str,
@@ -403,6 +310,12 @@ def send_visitor_rfd_confirmation(
             print("Warning: SMTP credentials not configured, skipping visitor RFD confirmation")
             return
 
+        # HTML-escape all user-provided values to prevent HTML injection
+        visitor_name_escaped = html.escape(visitor_name)
+        company_escaped = html.escape(company)
+        products_escaped = [html.escape(p) for p in products]
+        products_str_escaped = ", ".join(products_escaped) if products_escaped else "General inquiry"
+
         timestamp = datetime.utcnow().strftime("%B %d, %Y at %H:%M UTC")
         products_str = ", ".join(products) if products else "General inquiry"
         subject = "Thank You for Your Demo Request - Nexus IT"
@@ -431,7 +344,7 @@ The Nexus IT Team
 This confirmation was sent on {timestamp}
         """.strip()
 
-        html = f"""
+        html_body = f"""
 <html>
   <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
     <div style="background-color: #2563eb; padding: 20px; text-align: center;">
@@ -441,13 +354,13 @@ This confirmation was sent on {timestamp}
     <div style="padding: 30px; background-color: #f9fafb;">
       <h2 style="color: #1f2937;">Thank You for Your Demo Request!</h2>
 
-      <p>Dear {visitor_name},</p>
+      <p>Dear {visitor_name_escaped},</p>
 
-      <p>Thank you for your interest in Nexus IT solutions! We have received your request for a product demonstration for <strong>{company}</strong>.</p>
+      <p>Thank you for your interest in Nexus IT solutions! We have received your request for a product demonstration for <strong>{company_escaped}</strong>.</p>
 
       <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <h3 style="color: #2563eb; margin-top: 0;">Products you're interested in:</h3>
-        <p style="color: #4b5563;">{products_str}</p>
+        <p style="color: #4b5563;">{products_str_escaped}</p>
       </div>
 
       <h3 style="color: #1f2937;">What happens next?</h3>
@@ -469,17 +382,18 @@ This confirmation was sent on {timestamp}
 </html>
         """.strip()
 
+        envelope_sender = FROM_EMAIL or SMTP_USERNAME
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
-        msg["From"] = FROM_EMAIL or SMTP_USERNAME
+        msg["From"] = envelope_sender
         msg["To"] = visitor_email
         msg.attach(MIMEText(text, "plain"))
-        msg.attach(MIMEText(html, "html"))
+        msg.attach(MIMEText(html_body, "html"))
 
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
         server.starttls()
         server.login(SMTP_USERNAME, SMTP_PASSWORD)
-        server.sendmail(SMTP_USERNAME, [visitor_email], msg.as_string())
+        server.sendmail(envelope_sender, [visitor_email], msg.as_string())
         server.quit()
 
         print(f"RFD confirmation sent to visitor: {visitor_email}")
@@ -500,6 +414,10 @@ def send_visitor_contact_confirmation(
         if not SMTP_USERNAME or not SMTP_PASSWORD:
             print("Warning: SMTP credentials not configured, skipping visitor contact confirmation")
             return
+
+        # HTML-escape all user-provided values to prevent HTML injection
+        visitor_name_escaped = html.escape(visitor_name)
+        subject_line_escaped = html.escape(subject_line)
 
         timestamp = datetime.utcnow().strftime("%B %d, %Y at %H:%M UTC")
         subject = "We've Received Your Message - Nexus IT"
@@ -522,7 +440,7 @@ The Nexus IT Team
 This confirmation was sent on {timestamp}
         """.strip()
 
-        html = f"""
+        html_body = f"""
 <html>
   <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
     <div style="background-color: #2563eb; padding: 20px; text-align: center;">
@@ -532,13 +450,13 @@ This confirmation was sent on {timestamp}
     <div style="padding: 30px; background-color: #f9fafb;">
       <h2 style="color: #1f2937;">We've Received Your Message!</h2>
 
-      <p>Dear {visitor_name},</p>
+      <p>Dear {visitor_name_escaped},</p>
 
       <p>Thank you for reaching out to Nexus IT!</p>
 
       <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <h3 style="color: #2563eb; margin-top: 0;">Your Inquiry:</h3>
-        <p style="color: #4b5563;">"{subject_line}"</p>
+        <p style="color: #4b5563;">"{subject_line_escaped}"</p>
       </div>
 
       <p>Our team will review your inquiry and respond within <strong>1-2 business days</strong>. We appreciate your patience and look forward to assisting you.</p>
@@ -555,17 +473,18 @@ This confirmation was sent on {timestamp}
 </html>
         """.strip()
 
+        envelope_sender = FROM_EMAIL or SMTP_USERNAME
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
-        msg["From"] = FROM_EMAIL or SMTP_USERNAME
+        msg["From"] = envelope_sender
         msg["To"] = visitor_email
         msg.attach(MIMEText(text, "plain"))
-        msg.attach(MIMEText(html, "html"))
+        msg.attach(MIMEText(html_body, "html"))
 
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
         server.starttls()
         server.login(SMTP_USERNAME, SMTP_PASSWORD)
-        server.sendmail(SMTP_USERNAME, [visitor_email], msg.as_string())
+        server.sendmail(envelope_sender, [visitor_email], msg.as_string())
         server.quit()
 
         print(f"Contact confirmation sent to visitor: {visitor_email}")

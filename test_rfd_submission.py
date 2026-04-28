@@ -4,11 +4,11 @@ Test RFD form submission to verify email sending
 import requests
 import json
 
-# RFD submission data
+# RFD submission data (REPLACE WITH YOUR TEST DATA)
 data = {
-    "company": "Demo Company Inc",
-    "contactPerson": "Avish Maniar",
-    "email": "tech2026team@gmail.com",
+    "company": "Test Company Inc",
+    "contactPerson": "John Doe",
+    "email": "test@example.com",
     "phone": "555-0123",
     "products": ["Cloud Infrastructure Solutions", "Enterprise Security Suite"],
     "message": "I would like to schedule a demo for these products.",

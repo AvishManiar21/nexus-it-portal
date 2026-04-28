@@ -33,7 +33,13 @@ For Gmail accounts (recommended):
 
 ## Step 2: Configure Environment Variables
 
-Edit your `.env` file in the project root directory:
+Copy `.env.example` to `.env` if you haven't already, then edit your `.env` file in the project root directory:
+
+```bash
+cp .env.example .env
+```
+
+Update the SMTP configuration in `.env`:
 
 ```env
 # SMTP Configuration for Gmail

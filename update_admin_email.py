@@ -39,8 +39,8 @@ def main():
         if result.data:
             print(f"\n[SUCCESS] Updated admin email to {new_email}")
             print(f"\nAdmin alerts will now be sent to: {new_email}")
-            print(f"\nNote: Login still uses the old email ({old_email})")
-            print("If you want to change login email too, update it manually in the database.")
+            print(f"\nNote: This updates the email in admin_users table for receiving alerts.")
+            print("Login authentication is managed separately in Supabase Auth.")
         else:
             print(f"\n[WARNING] No admin found with email {old_email}")
             print("\nTrying to check existing admins...")
@@ -52,18 +52,17 @@ def main():
                 for admin in admins.data:
                     print(f"  - {admin['name']} ({admin['email']})")
 
-                    # Try to update the first admin
-                    if admins.data:
-                        first_admin_email = admins.data[0]['email']
-                        print(f"\nUpdating first admin ({first_admin_email}) to {new_email}...")
-                        update_result = supabase.table("admin_users").update({
-                            "email": new_email
-                        }).eq("email", first_admin_email).execute()
+                # Try to update the first admin
+                first_admin_email = admins.data[0]['email']
+                print(f"\nUpdating first admin ({first_admin_email}) to {new_email}...")
+                update_result = supabase.table("admin_users").update({
+                    "email": new_email
+                }).eq("email", first_admin_email).execute()
 
-                        if update_result.data:
-                            print(f"[SUCCESS] Updated {first_admin_email} to {new_email}")
-                        else:
-                            print(f"[FAILED] Could not update admin email")
+                if update_result.data:
+                    print(f"[SUCCESS] Updated {first_admin_email} to {new_email}")
+                else:
+                    print(f"[FAILED] Could not update admin email")
             else:
                 print("\nNo admin users found in database.")
 
