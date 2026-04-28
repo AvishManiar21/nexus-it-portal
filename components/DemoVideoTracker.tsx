@@ -35,8 +35,12 @@ function sendEvent(
   watchDurationSeconds: number
 ) {
   const sessionId = getSessionId();
-  if (!sessionId) return;
-
+  console.log("[SEND] sessionId:", sessionId, "eventType:", eventType);
+  if (!sessionId) {
+    console.log("[SEND] No session ID found, skipping");
+    return;
+  }
+  console.log("[SEND] Making fetch request...");
   fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/events/video-engagement`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -62,9 +66,11 @@ export default function DemoVideoTracker({
 
   const onStateChange = useCallback(
     (event: YT.OnStateChangeEvent) => {
+      console.log("[TRACKER] State changed:", event.data);
       const state = event.data;
 
       if (state === YT.PlayerState.PLAYING) {
+        console.log("[TRACKER] PLAYING detected, hasStarted:", hasStartedRef.current);
         if (!hasStartedRef.current) {
           hasStartedRef.current = true;
           sendEvent(productId, "start", 0);

@@ -507,9 +507,14 @@ async def get_lead_profile(lead_id: int, db: Client = Depends(get_db), admin: di
     ).eq("lead_id", lead_id).order("created_at", desc=True).execute()
 
     # Status change history with admin attribution
-    status_history_res = db.table("lead_status_audit").select(
-        "id, old_status, new_status, created_at, admin_users(name)"
-    ).eq("lead_id", lead_id).order("created_at", desc=True).execute()
+    try:
+        status_history_res = db.table("lead_status_audit").select(
+            "id, old_status, new_status, created_at, admin_users(name)"
+        ).eq("lead_id", lead_id).order("created_at", desc=True).execute()
+    except Exception as e:
+        # Handle case where table doesn't exist yet or isn't in schema cache
+        print(f"Warning: Could not fetch lead_status_audit: {e}")
+        status_history_res = type('obj', (object,), {'data': []})()
 
     # Build a unified chronological timeline
     timeline = []

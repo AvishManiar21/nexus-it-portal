@@ -1,9 +1,21 @@
+import { cookies } from "next/headers";
+
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL;
 
 async function apiFetch<T>(path: string, cacheOption?: RequestCache): Promise<T> {
+  // Get cookies from the incoming request to forward to the backend
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get("session");
+
+  const headers: HeadersInit = {};
+  if (sessionCookie) {
+    headers.Cookie = `session=${sessionCookie.value}`;
+  }
+
   const res = await fetch(`${API_URL}${path}`, {
     cache: cacheOption || "force-cache",
     next: { revalidate: 60 },
+    headers,
     credentials: "include"  // Send cookies for authentication
   });
   if (!res.ok) {

@@ -13,12 +13,15 @@ class ProductViewEvent(BaseModel):
 @router.post("/product-view")
 def record_product_view(event: ProductViewEvent, db=Depends(get_db)):
     try:
-        db.table("visitor_page_views").insert({
+        print(f"[VIEW] Received: session={event.session_id}, product={event.product_id}")
+        result = db.table("visitor_page_views").insert({
             "session_id": event.session_id,
             "product_id": event.product_id,
         }).execute()
-    except Exception:
-        raise HTTPException(status_code=500, detail="Failed to record view")
+        print(f"[VIEW] Inserted successfully: {result.data}")
+    except Exception as e:
+        print(f"[VIEW] Insert FAILED: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to record view: {str(e)}")
     return {"status": "ok"}
 
 
@@ -34,12 +37,22 @@ def record_video_engagement(event: VideoEngagementEvent, db=Depends(get_db)):
     if event.event_type not in ("start", "complete"):
         raise HTTPException(status_code=400, detail="Invalid event_type")
     try:
-        db.table("video_engagement_events").insert({
-            "session_id": event.session_id,
+        print(f"[VIDEO] Received: session={event.session_id}, product={event.product_id}, type={event.event_type}, duration={event.watch_duration_seconds}")
+        result = db.table("video_engagement_events").insert({
+            "session_id": str(event.session_id),
             "product_id": event.product_id,
             "event_type": event.event_type,
             "watch_duration_seconds": event.watch_duration_seconds,
         }).execute()
-    except Exception:
-        raise HTTPException(status_code=500, detail="Failed to record event")
+        print(f"[VIDEO] Insert result type: {type(result)}")
+        print(f"[VIDEO] Insert result data: {result.data}")
+        print(f"[VIDEO] Insert result count: {result.count}")
+
+        # Verify the insert by querying immediately
+        verify = db.table("video_engagement_events").select("*").eq("session_id", str(event.session_id)).execute()
+        print(f"[VIDEO] Verification query returned: {len(verify.data)} rows")
+
+    except Exception as e:
+        print(f"[VIDEO] Insert FAILED: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to record event: {str(e)}")
     return {"status": "ok"}
