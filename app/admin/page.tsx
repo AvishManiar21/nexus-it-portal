@@ -77,8 +77,8 @@ export default function AdminPage() {
       try {
         setIsLoading(true)
         const [leadsRes, messagesRes] = await Promise.all([
-          fetch(`${PYTHON_API_URL}/leads/`),
-          fetch(`${PYTHON_API_URL}/leads/contact-messages`)
+          fetch(`${PYTHON_API_URL}/leads/`, { credentials: 'include' }),
+          fetch(`${PYTHON_API_URL}/leads/contact-messages`, { credentials: 'include' })
         ])
 
         if (leadsRes.ok) {
@@ -275,7 +275,7 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {leads.map((lead) => (
+                  {leads.filter(lead => lead.source === "RFD Form").map((lead) => (
                     <tr key={lead.id} className="border-b border-gray-200 hover:bg-gray-50 transition">
                       <td className="px-6 py-4 text-sm text-gray-900">{lead.name}</td>
                       <td className="px-6 py-4 text-sm">

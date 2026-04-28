@@ -9,9 +9,9 @@ import {
 } from "@/app/lib/formValidation"
 
 const PRODUCT_OPTIONS = [
-  "Cloud Services",
-  "Cybersecurity",
-  "AI Analytics"
+  "Cloud Infrastructure Suite",
+  "Cybersecurity Shield",
+  "AI Analytics Dashboard"
 ]
 
 export default function RfdPage() {

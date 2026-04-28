@@ -421,6 +421,21 @@ async def submit_rfd(submission: RFDSubmission, background_tasks: BackgroundTask
                 "status": "pending"
             }).execute()
 
+        # Link all prior anonymous activity to this lead (UC-08: Anonymous-to-Lead Linking)
+        if submission.session_id:
+            try:
+                # Link page views
+                supabase.table("visitor_page_views").update({
+                    "lead_id": lead_id
+                }).eq("session_id", submission.session_id).is_("lead_id", "null").execute()
+
+                # Link video engagement events
+                supabase.table("video_engagement_events").update({
+                    "lead_id": lead_id
+                }).eq("session_id", submission.session_id).is_("lead_id", "null").execute()
+            except Exception as e:
+                print(f"Error linking anonymous activity: {str(e)}")
+
         # Create engagement log
         try:
             supabase.table("engagement_logs").insert({
@@ -491,6 +506,21 @@ def submit_contact(submission: ContactSubmission):
         }
         supabase.table("contact_messages").insert(message_data).execute()
 
+        # Link all prior anonymous activity to this lead (UC-08: Anonymous-to-Lead Linking)
+        if submission.session_id:
+            try:
+                # Link page views
+                supabase.table("visitor_page_views").update({
+                    "lead_id": lead_id
+                }).eq("session_id", submission.session_id).is_("lead_id", "null").execute()
+
+                # Link video engagement events
+                supabase.table("video_engagement_events").update({
+                    "lead_id": lead_id
+                }).eq("session_id", submission.session_id).is_("lead_id", "null").execute()
+            except Exception as e:
+                print(f"Error linking anonymous activity: {str(e)}")
+
         # Send confirmation email
         send_contact_confirmation_email(submission.email, submission.name, submission.subject)
 
@@ -529,7 +559,7 @@ def get_leads(
     if sort_order not in ("asc", "desc"):
         sort_order = "desc"
 
-    query = db.table("leads").select("id, name, email, company, status, created_at")
+    query = db.table("leads").select("id, name, email, company, phone, status, source, created_at")
 
     # Apply status filter if provided and not "all"
     if status_filter:
@@ -755,6 +785,11 @@ async def update_lead_status(
 
     if not update_res.data:
         raise HTTPException(status_code=500, detail="Failed to update status")
+
+    # Sync RFD submission statuses with lead status
+    db.table("rfd_submissions").update({
+        "status": new_status
+    }).eq("lead_id", lead_id).execute()
 
     # Create audit log entry
     audit_res = db.table("lead_status_audit").insert({

@@ -1,10 +1,11 @@
 import { fetchProducts } from "../../lib/api";
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Product Catalog | Nexus-IT Solutions",
-  description: "Browse our enterprise IT solutions including Cloud Services, Cybersecurity Solutions, and AI Analytics.",
+  description: "Browse our enterprise IT solutions including Cloud Infrastructure Suite, Cybersecurity Shield, and AI Analytics Dashboard.",
 };
 
 export default async function ProductsPage() {
@@ -35,20 +36,38 @@ export default async function ProductsPage() {
               <Link
                 key={product.id}
                 href={`/products/${product.id}`}
-                className="block p-6 border border-zinc-200 dark:border-zinc-700 rounded-xl hover:shadow-md transition-shadow"
+                className="block border border-zinc-200 dark:border-zinc-700 rounded-xl hover:shadow-md transition-shadow overflow-hidden"
               >
-                <span className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">
-                  {product.category}
-                </span>
-                <h2 className="text-lg font-semibold text-zinc-800 dark:text-white mt-2 mb-2">
-                  {product.name}
-                </h2>
-                <p className="text-zinc-500 dark:text-zinc-400 text-sm line-clamp-3">
-                  {product.description}
-                </p>
-                <span className="inline-block mt-4 text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline">
-                  Learn more →
-                </span>
+                {product.image_url && (
+                  <div className="relative w-full h-48 bg-zinc-100 dark:bg-zinc-800">
+                    <Image
+                      src={product.image_url}
+                      alt={product.name}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                  </div>
+                )}
+                <div className="p-6">
+                  <span className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">
+                    {product.category}
+                  </span>
+                  <h2 className="text-lg font-semibold text-zinc-800 dark:text-white mt-2 mb-2">
+                    {product.name}
+                  </h2>
+                  <p className="text-zinc-500 dark:text-zinc-400 text-sm line-clamp-3">
+                    {product.description}
+                  </p>
+                  {product.price !== null && (
+                    <p className="text-zinc-800 dark:text-white font-semibold mt-3">
+                      ${product.price.toLocaleString()}
+                    </p>
+                  )}
+                  <span className="inline-block mt-4 text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline">
+                    Learn more →
+                  </span>
+                </div>
               </Link>
             ))}
           </div>

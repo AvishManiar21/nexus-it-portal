@@ -1,5 +1,6 @@
 import { fetchProduct } from "../../../lib/api";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import ProductViewTracker from "../../../components/ProductViewTracker";
@@ -44,12 +45,29 @@ export default async function ProductDetail({ params }: Props) {
           &larr; Back to Services
         </Link>
 
+        {product.image_url && (
+          <div className="relative w-full h-64 rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800 mb-6">
+            <Image
+              src={product.image_url}
+              alt={product.name}
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
+        )}
+
         <span className="block text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-2">
           {product.category}
         </span>
         <h1 className="text-3xl font-bold text-zinc-800 dark:text-white mb-4">
           {product.name}
         </h1>
+        {product.price !== null && (
+          <p className="text-2xl font-bold text-zinc-800 dark:text-white mb-4">
+            ${product.price.toLocaleString()}
+          </p>
+        )}
         <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed mb-8">
           {product.description}
         </p>
