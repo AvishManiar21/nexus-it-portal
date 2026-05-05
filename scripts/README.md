@@ -134,6 +134,35 @@ python scripts/update_admin_email.py
 
 ---
 
+## Debug & Testing Scripts
+
+These scripts were used during development for debugging and testing specific features. They're kept for reference but not needed for normal operation.
+
+### check_env.py
+Quick script to verify environment variables are loaded correctly.
+
+### check_video_direct.py / check_video_events.py
+Debug scripts for video engagement tracking issues.
+
+### cleanup_test_data.py
+Removes test data from the database.
+
+### debug_query.py
+General-purpose database query debugging script.
+
+### delete_by_id.py
+Utility to delete specific records by ID during testing.
+
+### test_connection.py
+Tests basic database connectivity.
+
+### test_direct_insert.py / test_insert.py / test_unique_insert.py
+Various database insert testing scripts used during development.
+
+**Note:** These scripts are primarily for development/debugging. For production use, focus on the main scripts listed above (create_admin.py, verify_database.py, test_email.py, etc.).
+
+---
+
 ## Common Issues
 
 ### "Module not found" errors
