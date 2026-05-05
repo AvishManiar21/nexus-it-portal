@@ -187,12 +187,17 @@ After running `database/complete_setup.sql`, use these credentials to log in:
 
 ## Documentation
 
+### Setup Guides
 - **[DATABASE_SETUP.md](DATABASE_SETUP.md)** - Detailed database setup guide
 - **[QUICK_START.md](QUICK_START.md)** - Step-by-step setup checklist
 - **[SMTP_SETUP_GUIDE.md](SMTP_SETUP_GUIDE.md)** - Email configuration guide
-- **[TESTING_CHECKLIST.md](TESTING_CHECKLIST.md)** - Comprehensive testing guide
+
+### Reference Documentation
 - **[scripts/README.md](scripts/README.md)** - Utility scripts documentation
-- **[SPRINT_ISSUES_AND_RESOLUTIONS.md](SPRINT_ISSUES_AND_RESOLUTIONS.md)** - Development issue log
+- **[docs/TESTING_CHECKLIST.md](docs/TESTING_CHECKLIST.md)** - Comprehensive testing guide
+- **[docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)** - Known issues and workarounds
+- **[docs/SPRINT_ISSUES_AND_RESOLUTIONS.md](docs/SPRINT_ISSUES_AND_RESOLUTIONS.md)** - Development issue log
+- **[docs/US12_VERIFICATION_CHECKLIST.md](docs/US12_VERIFICATION_CHECKLIST.md)** - User story verification
 
 ## Features
 
@@ -351,7 +356,7 @@ After making schema changes:
 
 ## Testing
 
-See [TESTING_CHECKLIST.md](TESTING_CHECKLIST.md) for comprehensive testing guide.
+See [docs/TESTING_CHECKLIST.md](docs/TESTING_CHECKLIST.md) for comprehensive testing guide.
 
 **Quick test:**
 1. Browse products at [http://localhost:3000/products](http://localhost:3000/products)
@@ -381,7 +386,7 @@ Update production `.env`:
 
 ## Known Issues
 
-See [KNOWN_ISSUES.md](KNOWN_ISSUES.md) for current known issues and workarounds.
+See [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md) for current known issues and workarounds.
 
 ## Course Information
 
@@ -398,8 +403,8 @@ This project is created for academic purposes as part of SOFT210 coursework.
 
 For issues or questions:
 1. Check documentation in this repository
-2. Review [TESTING_CHECKLIST.md](TESTING_CHECKLIST.md) for common scenarios
-3. See [SPRINT_ISSUES_AND_RESOLUTIONS.md](SPRINT_ISSUES_AND_RESOLUTIONS.md) for resolved issues
+2. Review [docs/TESTING_CHECKLIST.md](docs/TESTING_CHECKLIST.md) for common scenarios
+3. See [docs/SPRINT_ISSUES_AND_RESOLUTIONS.md](docs/SPRINT_ISSUES_AND_RESOLUTIONS.md) for resolved issues
 4. Contact course instructor or team members
 
 ---

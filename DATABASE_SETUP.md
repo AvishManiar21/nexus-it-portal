@@ -332,7 +332,7 @@ After database setup is complete:
 3. ✅ Environment variables configured
 4. → Configure SMTP for emails (optional) - See [SMTP_SETUP_GUIDE.md](SMTP_SETUP_GUIDE.md)
 5. → Run the application - See [README.md](README.md)
-6. → Test all features - See [TESTING_CHECKLIST.md](TESTING_CHECKLIST.md)
+6. → Test all features - See [docs/TESTING_CHECKLIST.md](docs/TESTING_CHECKLIST.md)
 
 ## Security Notes
 
@@ -365,8 +365,8 @@ The application uses bcrypt for password hashing with:
 
 If you encounter issues not covered in this guide:
 
-1. Check [TESTING_CHECKLIST.md](TESTING_CHECKLIST.md) for verification steps
-2. Review [SPRINT_ISSUES_AND_RESOLUTIONS.md](SPRINT_ISSUES_AND_RESOLUTIONS.md) for known issues
+1. Check [docs/TESTING_CHECKLIST.md](docs/TESTING_CHECKLIST.md) for verification steps
+2. Review [docs/SPRINT_ISSUES_AND_RESOLUTIONS.md](docs/SPRINT_ISSUES_AND_RESOLUTIONS.md) for known issues
 3. Run `python scripts/verify_database.py` to diagnose
 4. Check Supabase project logs in dashboard
 5. Contact course instructor or team members

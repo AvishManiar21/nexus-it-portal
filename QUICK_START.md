@@ -279,7 +279,7 @@ To enable email confirmations:
 
 ### Run Comprehensive Tests
 
-See [TESTING_CHECKLIST.md](TESTING_CHECKLIST.md) for full test suite.
+See [docs/TESTING_CHECKLIST.md](docs/TESTING_CHECKLIST.md) for full test suite.
 
 ### Change Admin Password
 
@@ -350,8 +350,8 @@ WHERE email = 'admin@nexusit.com';
 - **Full Setup Guide:** [README.md](README.md)
 - **Database Details:** [DATABASE_SETUP.md](DATABASE_SETUP.md)
 - **Email Setup:** [SMTP_SETUP_GUIDE.md](SMTP_SETUP_GUIDE.md)
-- **Testing Guide:** [TESTING_CHECKLIST.md](TESTING_CHECKLIST.md)
-- **Known Issues:** [SPRINT_ISSUES_AND_RESOLUTIONS.md](SPRINT_ISSUES_AND_RESOLUTIONS.md)
+- **Testing Guide:** [docs/TESTING_CHECKLIST.md](docs/TESTING_CHECKLIST.md)
+- **Known Issues:** [docs/SPRINT_ISSUES_AND_RESOLUTIONS.md](docs/SPRINT_ISSUES_AND_RESOLUTIONS.md)
 
 ---
 
