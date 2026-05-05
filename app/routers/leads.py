@@ -902,6 +902,12 @@ async def update_lead_status(
     if not update_res.data:
         raise HTTPException(status_code=500, detail="Failed to update status")
 
+    # Also update rfd_submissions status for this lead (if any exist)
+    # This keeps the RFD form status in sync with the lead status
+    db.table("rfd_submissions").update({
+        "status": new_status
+    }).eq("lead_id", lead_id).execute()
+
     # Create audit log entry
     audit_res = db.table("lead_status_audit").insert({
         "lead_id": lead_id,
