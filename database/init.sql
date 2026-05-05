@@ -1,5 +1,11 @@
 -- US-33: Setup Database With Required Tables
 -- Run this in Supabase SQL Editor (Dashboard > SQL Editor > New Query)
+--
+-- ⚠️  IMPORTANT: This is a BASIC setup script with only core tables.
+-- ⚠️  For COMPLETE setup with all tables, indexes, and seed data, use:
+-- ⚠️  database/complete_setup.sql instead
+--
+-- This script is kept for reference only.
 
 -- 1. admin_users
 CREATE TABLE IF NOT EXISTS admin_users (
