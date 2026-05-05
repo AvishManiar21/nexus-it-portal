@@ -48,6 +48,10 @@ async def get_pool() -> asyncpg.Pool:
 
     The pool is created with min_size=1, max_size=10 and ssl='require' because
     Supabase Postgres requires TLS.
+
+    statement_cache_size=0 is required for Supabase pooler compatibility.
+    Supabase uses pgbouncer in transaction mode which doesn't support prepared
+    statements. Setting this to 0 disables the statement cache.
     """
     global _pool
     if _pool is not None:
@@ -63,6 +67,7 @@ async def get_pool() -> asyncpg.Pool:
                 min_size=1,
                 max_size=10,
                 ssl="require",
+                statement_cache_size=0,  # Required for Supabase pooler
             )
     return _pool
 
