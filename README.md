@@ -59,8 +59,8 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/GannonCIS/SOFT210-SP26-TeamB.git
-cd SOFT210-SP26-TeamB
+git clone https://github.com/AvishManiar21/nexus-it-portal.git
+cd nexus-it-portal
 ```
 
 ### 2. Install Dependencies
@@ -394,6 +394,21 @@ See [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md) for current known issues and wo
 **Term:** Spring 2026
 **Team:** Team B
 **Institution:** Gannon University
+
+## Contribution
+
+This repository represents work completed as part of a team project. The majority of the implementation, architecture, and feature development was contributed by Avish Maniar, including:
+
+- Full-stack architecture design and implementation
+- FastAPI backend with authentication, lead management, and analytics
+- Next.js frontend with Admin dashboard and public-facing pages
+- Supabase database schema design and migrations
+- Anonymous visitor tracking and lead intelligence features
+- Email notification system with SMTP integration
+- Analytics dashboard with real-time metrics
+- Complete documentation and setup guides
+
+This public repository is maintained independently for portfolio purposes.
 
 ## License
 
