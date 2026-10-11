@@ -34,26 +34,29 @@ This is the recommended method and takes approximately 10 minutes.
 3. Click "Create new project"
 4. Wait 2-3 minutes for project to initialize
 
-### Step 3: Run Database Setup Script
+### Step 3: Create the Database Schema
 
-1. In your Supabase project dashboard, click "SQL Editor" in the left sidebar
-2. Click "New Query"
-3. Open the file `database/complete_setup.sql` from this repository
-4. Copy the **entire contents** of `complete_setup.sql`
-5. Paste into the Supabase SQL Editor
-6. Click "Run" button (or press Ctrl+Enter / Cmd+Enter)
-7. Wait for execution to complete (should take 5-10 seconds)
-8. You should see "Success. No rows returned" message
+The schema lives in `supabase/migrations/` (applied in filename order), and the
+product catalog in `supabase/seed.sql`.
 
-**What this script does:**
-- Creates all database tables (leads, products, admin_users, etc.)
-- Sets up foreign key relationships
-- Creates indexes for performance
-- Disables Row Level Security (app manages access control)
-- Inserts seed data:
-  - 2 admin users (admin@nexusit.com, sales@nexusit.com)
-  - 6 sample products
-  - 1 sample lead for testing
+**Option A: Supabase CLI (recommended)**
+```bash
+supabase db push --db-url "$DATABASE_URL"
+```
+Get `DATABASE_URL` in Step 4 first. The CLI records which migrations ran, so
+re-running only applies new ones.
+
+**Option B: SQL Editor**
+1. In your Supabase project dashboard, click "SQL Editor" → "New Query"
+2. Paste the contents of each file in `supabase/migrations/`, oldest first, and click "Run"
+3. Then paste and run `supabase/seed.sql` to add the product catalog
+
+**What this creates:**
+- All 10 tables, foreign keys and indexes
+- Row Level Security enabled on every table (the backend uses the service-role
+  key, so the app works; the public anon key gets no access)
+- The 3-product catalog (from `seed.sql`). No admin users; create one with
+  `scripts/create_admin.py` (see Step 7).
 
 ### Step 4: Obtain Supabase Credentials
 
@@ -159,7 +162,7 @@ All expected tables exist!
 
 If you see errors, check:
 - Your `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are correct
-- You ran the `complete_setup.sql` script successfully
+- You applied the migrations in `supabase/migrations/` successfully
 - Your Supabase project is active (not paused)
 
 ### Step 7: Test Admin Login
@@ -197,7 +200,8 @@ If you prefer to run PostgreSQL locally instead of using Supabase:
 
 2. **Run setup script:**
    ```bash
-   psql nexusit < database/complete_setup.sql
+   for f in supabase/migrations/*.sql; do psql nexusit -f "$f"; done
+   psql nexusit -f supabase/seed.sql
    ```
 
 3. **Configure .env:**
@@ -220,7 +224,7 @@ If you prefer to run PostgreSQL locally instead of using Supabase:
 
 **Solution:**
 1. Go to Supabase SQL Editor
-2. Run `database/complete_setup.sql` again
+2. Apply the migrations again (see Step 3)
 3. Verify tables exist:
    ```sql
    SELECT table_name FROM information_schema.tables
@@ -279,7 +283,7 @@ Always use the **Session Pooler** (6543) for best compatibility.
 
 ## Database Schema Overview
 
-The database consists of 12 tables:
+The database consists of 10 tables:
 
 ### Core Tables
 - **admin_users** - Administrator accounts for dashboard access
@@ -296,29 +300,30 @@ The database consists of 12 tables:
 ### Management Tables
 - **lead_notes** - Admin notes on leads
 - **lead_status_audit** - Lead status change history
-- **demo_sessions** - Scheduled demo sessions (future use)
-- **anonymous_engagement_logs** - General anonymous tracking (legacy)
 
 ## Seed Data
 
-After running `complete_setup.sql`, you'll have:
+`supabase/seed.sql` adds the product catalog:
+1. Cloud Infrastructure Suite
+2. AI Analytics Dashboard
+3. Cybersecurity Shield
 
-### Admin Users
-None — create them with `python scripts/create_admin.py --email you@example.com --name "Your Name"`.
+No admin users are seeded: create them with `python scripts/create_admin.py --email you@example.com --name "Your Name"`.
 
-### Products
-1. Cloud Infrastructure Solutions
-2. Enterprise Security Suite
-3. Data Analytics Platform
-4. IT Service Management
-5. Network Monitoring Tools
-6. Backup & Disaster Recovery
+## Schema Changes
 
-### Sample Lead
-- Name: John Smith
-- Email: john.smith@example.com
-- Company: Acme Corporation
-- Source: RFD Form
+**Existing databases (one-time):** a database created before `supabase/migrations/`
+existed already has the baseline schema. Mark the baseline as applied so
+`db push` only runs newer migrations:
+```bash
+supabase migration repair --status applied 20261011000000 --db-url "$DATABASE_URL"
+```
+
+1. Create a new migration: `supabase migration new <short_name>` (creates a
+   timestamped file in `supabase/migrations/`)
+2. Write the SQL in that file
+3. Apply it: `supabase db push --db-url "$DATABASE_URL"`
+4. Commit the file with the code that needs it
 
 ## Next Steps
 

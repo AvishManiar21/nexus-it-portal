@@ -63,4 +63,4 @@ None available. This requires Supabase support intervention or migration to dire
 
 - `app/routers/events.py` - Video engagement endpoint
 - `components/DemoVideoTracker.tsx` - Frontend video tracker
-- `database/fix_video_tables.sql` - Table recreation script
+- `supabase/migrations/` - Table definitions (formerly `database/fix_video_tables.sql`)
