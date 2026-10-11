@@ -9,10 +9,11 @@ import os
 
 # Session secret must match the Next.js SESSION_SECRET
 SESSION_SECRET = os.getenv("SESSION_SECRET")
-if not SESSION_SECRET:
+MIN_SECRET_LENGTH = 32
+if not SESSION_SECRET or len(SESSION_SECRET) < MIN_SECRET_LENGTH:
     raise RuntimeError(
-        "SESSION_SECRET environment variable is required for JWT authentication. "
-        "Please set it in your .env file to match the Next.js session secret."
+        f"SESSION_SECRET must be set to a random string of at least {MIN_SECRET_LENGTH} characters "
+        "(e.g. `openssl rand -base64 32`). It must match the Next.js SESSION_SECRET."
     )
 
 
