@@ -46,6 +46,9 @@ def read_password() -> str:
             raise ValueError("Passwords do not match")
     if len(password) < MIN_PASSWORD_LENGTH:
         raise ValueError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters")
+    if len(password.encode("utf-8")) > 72:
+        # bcrypt only uses the first 72 bytes and bcrypt>=5 rejects longer input
+        raise ValueError("Password must be at most 72 bytes (about 72 ASCII characters)")
     return password
 
 

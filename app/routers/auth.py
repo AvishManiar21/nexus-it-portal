@@ -25,6 +25,9 @@ class LoginResponse(BaseModel):
     user: dict
 
 
+MAX_PASSWORD_BYTES = 72  # bcrypt's input limit
+
+
 @router.post("/login", response_model=LoginResponse)
 @limiter.limit(LOGIN_LIMIT)
 def login(request: Request, credentials: LoginRequest, db: Client = Depends(get_db)):
@@ -43,11 +46,12 @@ def login(request: Request, credentials: LoginRequest, db: Client = Depends(get_
         raise HTTPException(status_code=401, detail=invalid_msg)
 
     user = result.data[0]
+    password = credentials.password.encode("utf-8")
 
-    if not bcrypt.checkpw(
-        credentials.password.encode("utf-8"),
-        user["password_hash"].encode("utf-8"),
-    ):
+    # bcrypt only uses the first 72 bytes, and bcrypt>=5 raises ValueError
+    # beyond that. No stored password can be that long (the admin scripts
+    # enforce the limit), so treat it as a wrong password rather than a 500.
+    if len(password) > MAX_PASSWORD_BYTES or not bcrypt.checkpw(password, user["password_hash"].encode("utf-8")):
         raise HTTPException(status_code=401, detail=invalid_msg)
 
     # Issue JWT
