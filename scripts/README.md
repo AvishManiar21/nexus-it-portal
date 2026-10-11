@@ -30,6 +30,24 @@ ADMIN_PASSWORD='...' python scripts/create_admin.py --email you@example.com
 
 ---
 
+### reset_admin_password.py
+Sets a new password for an existing admin user.
+
+**Usage:**
+```bash
+python scripts/reset_admin_password.py --email you@example.com
+```
+
+**What it does:**
+- Checks the admin exists (nothing changes if it doesn't)
+- Prompts for the new password twice (no echo), or reads `ADMIN_PASSWORD`
+- Rejects passwords shorter than 12 characters, stores only the bcrypt hash, never prints the password
+
+**Requirements:**
+- SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in `.env`
+
+---
+
 ### verify_database.py
 Verifies database schema and checks table creation.
 
