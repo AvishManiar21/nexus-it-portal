@@ -239,7 +239,8 @@ def send_admin_rfd_alert(
 
         timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
         products_str = ", ".join(products) if products else "(none)"
-        subject = f"[New RFD] {company} - {contact_person}"
+        # Strip CR/LF so visitor input cannot inject extra email headers
+        subject = f"[New RFD] {company} - {contact_person}".replace("\r", " ").replace("\n", " ")
 
         text = f"""
 A new Request-for-Demo has been submitted on the Nexus IT portal.
@@ -255,17 +256,25 @@ Submitted:      {timestamp}
 Log in to the admin portal to review and follow up.
         """.strip()
 
-        html = f"""
+        # HTML-escape all visitor-provided values so they render as text, not markup
+        safe = {
+            "company": html.escape(company),
+            "contact_person": html.escape(contact_person),
+            "contact_email": html.escape(contact_email),
+            "phone": html.escape(phone),
+            "products": html.escape(products_str),
+        }
+        html_body = f"""
 <html>
   <body style="font-family: Arial, sans-serif; color: #333;">
     <h2>New RFD Submission</h2>
     <p>A new Request-for-Demo has been submitted on the Nexus IT portal.</p>
     <table cellpadding="6" style="border-collapse: collapse;">
-      <tr><td><strong>Company</strong></td><td>{company}</td></tr>
-      <tr><td><strong>Contact Person</strong></td><td>{contact_person}</td></tr>
-      <tr><td><strong>Email</strong></td><td>{contact_email}</td></tr>
-      <tr><td><strong>Phone</strong></td><td>{phone}</td></tr>
-      <tr><td><strong>Products</strong></td><td>{products_str}</td></tr>
+      <tr><td><strong>Company</strong></td><td>{safe["company"]}</td></tr>
+      <tr><td><strong>Contact Person</strong></td><td>{safe["contact_person"]}</td></tr>
+      <tr><td><strong>Email</strong></td><td>{safe["contact_email"]}</td></tr>
+      <tr><td><strong>Phone</strong></td><td>{safe["phone"]}</td></tr>
+      <tr><td><strong>Products</strong></td><td>{safe["products"]}</td></tr>
       <tr><td><strong>Lead ID</strong></td><td>{lead_id}</td></tr>
       <tr><td><strong>Submitted</strong></td><td>{timestamp}</td></tr>
     </table>
@@ -282,7 +291,7 @@ Log in to the admin portal to review and follow up.
         msg["To"] = FROM_EMAIL or SMTP_USERNAME
         msg["Bcc"] = ", ".join(admin_emails)
         msg.attach(MIMEText(text, "plain"))
-        msg.attach(MIMEText(html, "html"))
+        msg.attach(MIMEText(html_body, "html"))
 
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
         server.starttls()
