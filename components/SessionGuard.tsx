@@ -22,7 +22,8 @@ const ACTIVITY_EVENTS = [
 export default function SessionGuard() {
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
   const warningTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
-  const lastRefreshRef = useRef<number>(Date.now());
+  // Set on mount (not during render) so the first refresh still waits a full throttle window
+  const lastRefreshRef = useRef<number>(0);
   const [showWarning, setShowWarning] = useState(false);
 
   const handleExpiry = useCallback(async () => {
@@ -46,10 +47,9 @@ export default function SessionGuard() {
     fetch("/api/session", { method: "POST" }).catch(() => {});
   }, []);
 
-  const resetTimers = useCallback(() => {
+  const startTimers = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
-    setShowWarning(false);
 
     // Refresh the server session on activity (throttled)
     refreshServerSession();
@@ -64,9 +64,14 @@ export default function SessionGuard() {
   }, [handleExpiry, refreshServerSession]);
 
   useEffect(() => {
-    resetTimers();
+    lastRefreshRef.current = Date.now();
+    // The warning starts hidden, so mount only needs the timers
+    startTimers();
 
-    const onActivity = () => resetTimers();
+    const onActivity = () => {
+      setShowWarning(false);
+      startTimers();
+    };
     for (const event of ACTIVITY_EVENTS) {
       window.addEventListener(event, onActivity, { passive: true });
     }
@@ -78,7 +83,7 @@ export default function SessionGuard() {
         window.removeEventListener(event, onActivity);
       }
     };
-  }, [resetTimers]);
+  }, [startTimers]);
 
   if (!showWarning) return null;
 

@@ -32,31 +32,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-export async function GET() {
-  try {
-    const response = await fetch(`${PYTHON_API_URL}/leads/`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return NextResponse.json(
-        { detail: data.detail || 'Failed to fetch leads' },
-        { status: response.status }
-      );
-    }
-
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error('API route error:', error);
-    return NextResponse.json(
-      { detail: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}

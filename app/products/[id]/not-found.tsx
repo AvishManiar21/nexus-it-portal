@@ -11,7 +11,7 @@ export default function NotFound() {
           Product Not Found
         </h2>
         <p className="text-zinc-500 dark:text-zinc-400 mb-6">
-          The product you're looking for doesn't exist or may have been removed.
+          The product you&apos;re looking for doesn&apos;t exist or may have been removed.
         </p>
         <div className="flex gap-4 justify-center">
           <Link

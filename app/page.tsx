@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950">
@@ -7,8 +9,8 @@ export default function HomePage() {
           Enterprise-grade Cloud Services, Cybersecurity Solutions, and AI Analytics — built for modern businesses.
         </p>
         <div className="flex gap-4">
-          <a href="/products" className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-lg transition-colors">Explore Services</a>
-          <a href="/rfd" className="border border-white text-white hover:bg-white hover:text-zinc-900 font-medium px-6 py-3 rounded-lg transition-colors">Request a Demo</a>
+          <Link href="/products" className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-lg transition-colors">Explore Services</Link>
+          <Link href="/rfd" className="border border-white text-white hover:bg-white hover:text-zinc-900 font-medium px-6 py-3 rounded-lg transition-colors">Request a Demo</Link>
         </div>
       </section>
 
@@ -20,17 +22,17 @@ export default function HomePage() {
             { title: "Cybersecurity", desc: "End-to-end security solutions to protect your business assets.", href: "/products/2" },
             { title: "AI Analytics", desc: "Data-driven insights powered by advanced machine learning.", href: "/products/3" },
           ].map((service) => (
-            <a key={service.title} href={service.href} className="block p-6 border border-zinc-200 dark:border-zinc-700 rounded-xl hover:shadow-md transition-shadow">
+            <Link key={service.title} href={service.href} className="block p-6 border border-zinc-200 dark:border-zinc-700 rounded-xl hover:shadow-md transition-shadow">
               <h3 className="text-lg font-semibold text-zinc-800 dark:text-white mb-2">{service.title}</h3>
               <p className="text-zinc-500 dark:text-zinc-400 text-sm">{service.desc}</p>
-            </a>
+            </Link>
           ))}
         </div>
       </section>
 
       <section className="bg-zinc-100 dark:bg-zinc-900 text-center px-6 py-12">
         <p className="text-zinc-600 dark:text-zinc-400 mb-4">Ready to get started? Reach out to our team.</p>
-        <a href="/contact" className="bg-zinc-800 hover:bg-zinc-700 text-white font-medium px-6 py-3 rounded-lg transition-colors">Contact Us</a>
+        <Link href="/contact" className="bg-zinc-800 hover:bg-zinc-700 text-white font-medium px-6 py-3 rounded-lg transition-colors">Contact Us</Link>
       </section>
     </div>
   )

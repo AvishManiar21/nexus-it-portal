@@ -71,7 +71,7 @@ export default function AdminPage() {
           router.push("/admin/login")
           return
         }
-      } catch (err) {
+      } catch {
         router.push("/admin/login")
       }
     }
