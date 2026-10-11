@@ -9,6 +9,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 import html
+import re
 
 from app.database import get_db
 from app.dependencies.auth import get_current_admin
@@ -581,9 +582,10 @@ async def submit_rfd(submission: RFDSubmission, background_tasks: BackgroundTask
     except HTTPException:
         raise
     except Exception as e:
+        print(f"Error processing RFD submission: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error processing RFD submission: {str(e)}"
+            detail="Error processing RFD submission"
         )
 
 
@@ -646,7 +648,10 @@ def submit_contact(submission: ContactSubmission, background_tasks: BackgroundTa
         }
     except Exception as e:
         print(f"Error processing contact submission: {e}")
-        raise Exception("Failed to process contact submission")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to process contact submission"
+        )
 
 
 @router.get("/contact-messages")
@@ -688,8 +693,10 @@ def get_leads(
                 )
             query = query.eq("status", normalized_filter)
 
-    if search and search.strip():
-        term = search.strip()
+    # Commas, parentheses, quotes and backslashes are PostgREST filter syntax;
+    # left in, they let the search text add or alter conditions in or_().
+    term = re.sub(r'[,()"\\]', " ", search or "").strip()
+    if term:
         query = query.or_(
             f"company.ilike.%{term}%,name.ilike.%{term}%,email.ilike.%{term}%"
         )
@@ -712,10 +719,13 @@ async def get_lead(lead_id: int, admin: dict = Depends(get_current_admin)):
                 detail="Lead not found"
             )
         return response.data[0]
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"Error fetching lead {lead_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error fetching lead: {str(e)}"
+            detail="Error fetching lead"
         )
 
 

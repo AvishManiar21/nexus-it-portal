@@ -32,7 +32,7 @@ async def record_product_view(event: ProductViewEvent):
         return {"status": "ok", "id": new_id}
     except asyncpg.PostgresError as e:
         print(f"[VIEW] Insert FAILED: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to record view: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to record view")
 
 
 class VideoEngagementEvent(BaseModel):
@@ -70,4 +70,4 @@ async def record_video_engagement(event: VideoEngagementEvent):
         return {"status": "ok", "id": new_id}
     except asyncpg.PostgresError as e:
         print(f"[VIDEO] Insert FAILED: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to record event: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to record event")
