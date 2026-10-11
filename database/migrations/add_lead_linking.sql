@@ -1,5 +1,5 @@
 -- Migration: Add lead_id columns for anonymous-to-lead linking (UC-08)
--- Run this in Supabase SQL Editor: https://supabase.com/dashboard/project/ghulzolxuthkxfwuegei/sql
+-- Run this in Supabase SQL Editor: https://supabase.com/dashboard/project/[PROJECT_REF]/sql
 
 -- Add lead_id to visitor_page_views
 ALTER TABLE public.visitor_page_views

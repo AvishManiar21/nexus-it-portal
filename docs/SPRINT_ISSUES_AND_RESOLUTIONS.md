@@ -520,7 +520,7 @@ def validate_content(cls, v: str) -> str:
 ```
 socket.gaierror: [Errno 11004] getaddrinfo failed
 ```
-- Backend couldn't resolve `db.ghulzolxuthkxfwuegei.supabase.co`
+- Backend couldn't resolve `db.[PROJECT_REF].supabase.co`
 - Direct database connection requires IPv6 support
 - Windows/network configuration blocked DNS resolution
 
@@ -530,18 +530,18 @@ socket.gaierror: [Errno 11004] getaddrinfo failed
 
 **Before:**
 ```env
-DATABASE_URL=postgresql://postgres:Atm2104%40Atm2104@db.ghulzolxuthkxfwuegei.supabase.co:5432/postgres
+DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres
 ```
 
 **After:**
 ```env
-DATABASE_URL=postgresql://postgres.ghulzolxuthkxfwuegei:Atm2104%40Atm2104@aws-1-us-west-2.pooler.supabase.com:6543/postgres
+DATABASE_URL=postgresql://postgres.[PROJECT_REF]:[PASSWORD]@aws-1-us-west-2.pooler.supabase.com:6543/postgres
 ```
 
 **Key Changes:**
-- Hostname: `db.ghulzolxuthkxfwuegei.supabase.co` → `aws-1-us-west-2.pooler.supabase.com`
+- Hostname: `db.[PROJECT_REF].supabase.co` → `aws-1-us-west-2.pooler.supabase.com`
 - Port: `5432` → `6543`
-- Username: `postgres` → `postgres.ghulzolxuthkxfwuegei`
+- Username: `postgres` → `postgres.[PROJECT_REF]`
 
 **Why Pooler Connection Works:**
 - Uses IPv4-compatible endpoint
@@ -567,7 +567,7 @@ DATABASE_URL=postgresql://postgres.ghulzolxuthkxfwuegei:Atm2104%40Atm2104@aws-1-
 3. **Step 3:** Checked CORS configuration → CORS configured correctly ✓
 4. **Step 4:** Checked backend logs → Found 500 Internal Server Error
 5. **Step 5:** Examined error stack trace → DNS resolution failure
-6. **Step 6:** Tested DNS resolution: `ping db.ghulzolxuthkxfwuegei.supabase.co` → Failed
+6. **Step 6:** Tested DNS resolution: `ping db.[PROJECT_REF].supabase.co` → Failed
 7. **Step 7:** Identified solution: Use pooler connection instead
 
 **Lessons Learned:**
