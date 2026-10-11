@@ -41,7 +41,8 @@ jobs:
             requirements-dev.txt
       - run: pip install -r requirements-dev.txt
       - run: python -m compileall -q app scripts main.py
-      - run: python -m pytest -q tests
+      - name: Tests with coverage (fails below 85%)
+        run: python -m pytest -q tests --cov=app --cov-report=term-missing --cov-fail-under=85
 
   security:
     name: Security (dependency audit)

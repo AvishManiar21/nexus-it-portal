@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from app.routers import products, events, rfd, auth, leads, analytics, insights
+from app.routers import products, events, auth, leads, analytics, insights
 from app.db_pg import close_pool
 from app.rate_limit import limiter
 from slowapi import _rate_limit_exceeded_handler
@@ -63,7 +63,6 @@ if os.getenv("NODE_ENV") == "production":
 # Include routers
 app.include_router(products.router)
 app.include_router(events.router)
-app.include_router(rfd.router)
 app.include_router(auth.router)
 # insights before leads: GET /leads/scores must not be captured by /leads/{lead_id}
 app.include_router(insights.router)
