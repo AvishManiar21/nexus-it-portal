@@ -4,7 +4,7 @@ Verifies Next.js session cookies to ensure only authenticated admins can access 
 """
 from fastapi import HTTPException, Cookie, status
 from typing import Optional
-from jose import jwt, JWTError
+import jwt
 import os
 
 # Session secret must match the Next.js SESSION_SECRET
@@ -61,7 +61,7 @@ async def get_current_admin(session: Optional[str] = Cookie(None)) -> dict:
             "name": payload.get("name", "Admin")
         }
 
-    except JWTError as e:
+    except jwt.InvalidTokenError:  # covers bad signature, expiry and malformed tokens
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired session. Please log in again.",
