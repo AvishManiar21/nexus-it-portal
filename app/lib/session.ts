@@ -1,9 +1,7 @@
 import "server-only";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-
-const secretKey = process.env.SESSION_SECRET || "nexus-it-session-secret-change-me";
-const encodedKey = new TextEncoder().encode(secretKey);
+import { getSessionKey } from "./sessionKey";
 
 // Inactivity timeout in minutes — session expires after this much idle time
 export const SESSION_TIMEOUT_MINUTES = 15;
@@ -21,13 +19,15 @@ export async function encrypt(payload: SessionPayload) {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${SESSION_TIMEOUT_MINUTES}m`)
-    .sign(encodedKey);
+    .sign(getSessionKey());
 }
 
 export async function decrypt(session: string | undefined = "") {
   if (!session) return null;
+  // Resolve outside the try so a missing secret surfaces instead of looking like a bad token.
+  const key = getSessionKey();
   try {
-    const { payload } = await jwtVerify(session, encodedKey, {
+    const { payload } = await jwtVerify(session, key, {
       algorithms: ["HS256"],
     });
     return payload as unknown as SessionPayload;

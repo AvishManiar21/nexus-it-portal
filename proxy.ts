@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SignJWT, jwtVerify } from "jose";
-
-const secretKey = process.env.SESSION_SECRET || "nexus-it-session-secret-change-me";
-const encodedKey = new TextEncoder().encode(secretKey);
+import { getSessionKey } from "./app/lib/sessionKey";
 
 // Must match the value in app/lib/session.ts
 const SESSION_TIMEOUT_MINUTES = 15;
@@ -57,9 +55,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
+  // Resolve outside the try so a missing secret surfaces instead of looking like a bad token.
+  const key = getSessionKey();
+
   try {
     // Verify the current session — this will throw if expired or invalid
-    const { payload } = await jwtVerify(sessionCookie, encodedKey, {
+    const { payload } = await jwtVerify(sessionCookie, key, {
       algorithms: ["HS256"],
     });
 
@@ -74,7 +75,7 @@ export async function proxy(request: NextRequest) {
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
       .setExpirationTime(`${SESSION_TIMEOUT_MINUTES}m`)
-      .sign(encodedKey);
+      .sign(key);
 
     const response = NextResponse.next();
     response.cookies.set("session", newToken, {
