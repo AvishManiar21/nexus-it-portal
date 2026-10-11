@@ -1,0 +1,22 @@
+# Keep secrets and local build output out of the build context
+.env*
+!.env.example
+.git
+.github
+.claude
+.next
+node_modules
+coverage
+.coverage
+htmlcov
+.pytest_cache
+__pycache__
+**/__pycache__
+*.pyc
+venv
+.venv
+graphify-out
+docs
+tests
+supabase
+*.md
