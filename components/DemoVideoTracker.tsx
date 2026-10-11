@@ -1,5 +1,6 @@
 "use client";
 
+import { BACKEND_API_URL } from "@/lib/backend";
 import { useEffect, useRef, useCallback } from "react";
 
 interface Props {
@@ -41,7 +42,7 @@ function sendEvent(
     return;
   }
   console.log("[SEND] Making fetch request...");
-  fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/events/video-engagement`, {
+  fetch(`${BACKEND_API_URL}/events/video-engagement`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

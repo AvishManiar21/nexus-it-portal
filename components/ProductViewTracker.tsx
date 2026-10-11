@@ -1,5 +1,6 @@
 "use client";
 
+import { BACKEND_API_URL } from "@/lib/backend";
 import { useEffect } from "react";
 
 interface Props {
@@ -15,7 +16,7 @@ export default function ProductViewTracker({ productId }: Props) {
 
     if (!sessionId) return;
 
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/events/product-view`, {
+    fetch(`${BACKEND_API_URL}/events/product-view`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ session_id: sessionId, product_id: productId }),

@@ -1,5 +1,6 @@
 "use client"
 
+import { BACKEND_API_URL } from "@/lib/backend";
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { logout } from "@/app/actions/auth"
@@ -51,7 +52,6 @@ interface DashboardMetrics {
   }>
 }
 
-const PYTHON_API_URL = process.env.NEXT_PUBLIC_PYTHON_API_URL || "http://localhost:8000"
 
 export default function AdminPage() {
   const router = useRouter()
@@ -84,8 +84,8 @@ export default function AdminPage() {
       try {
         setIsLoading(true)
         const [leadsRes, messagesRes] = await Promise.all([
-          fetch(`${PYTHON_API_URL}/leads/`, { credentials: 'include' }),
-          fetch(`${PYTHON_API_URL}/leads/contact-messages`, { credentials: 'include' })
+          fetch(`${BACKEND_API_URL}/leads/`, { credentials: 'include' }),
+          fetch(`${BACKEND_API_URL}/leads/contact-messages`, { credentials: 'include' })
         ])
 
         if (leadsRes.ok) {
@@ -112,7 +112,7 @@ export default function AdminPage() {
     try {
       setMetricsLoading(true)
       setMetricsError("")
-      const res = await fetch(`${PYTHON_API_URL}/analytics/dashboard`, {
+      const res = await fetch(`${BACKEND_API_URL}/analytics/dashboard`, {
         credentials: "include",
       })
       if (!res.ok) {

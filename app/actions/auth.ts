@@ -3,9 +3,10 @@
 import { createSession, deleteSession } from "@/app/lib/session";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { BACKEND_API_URL } from "@/lib/backend";
 import { forwardedForHeaders } from "@/app/lib/forwardedFor";
 
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:8000";
+const API_URL = BACKEND_API_URL;
 
 export type LoginState = {
   error?: string;

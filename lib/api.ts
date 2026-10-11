@@ -1,6 +1,7 @@
+import { BACKEND_API_URL } from "@/lib/backend";
 import { cookies } from "next/headers";
 
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+const API_URL = BACKEND_API_URL;
 
 async function apiFetch<T>(path: string, cacheOption?: RequestCache): Promise<T> {
   // Get cookies from the incoming request to forward to the backend
