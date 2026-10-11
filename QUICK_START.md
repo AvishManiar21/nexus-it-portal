@@ -49,11 +49,11 @@ pip install -r requirements.txt
 #### 2.2 Run Database Setup
 
 1. In Supabase dashboard → "SQL Editor" → "New Query"
-2. Open `database/complete_setup.sql` from your local repository
-3. Copy entire file contents
-4. Paste into Supabase SQL Editor
-5. Click "Run" (or Ctrl+Enter)
-6. Wait for "Success. No rows returned" message
+2. Paste the contents of each file in `supabase/migrations/` (oldest first) and click "Run"
+3. Then paste and run `supabase/seed.sql` to add the product catalog
+4. Wait for "Success" messages
+
+Or, with the Supabase CLI: `supabase db push --db-url "$DATABASE_URL"` (see DATABASE_SETUP.md)
 
 **Expected time:** 2 minutes
 
@@ -238,7 +238,7 @@ npm run dev
 **Problem:** Wrong credentials or database not set up
 
 **Fix:**
-1. Verify you ran `database/complete_setup.sql` in Supabase
+1. Verify you applied the migrations in `supabase/migrations/`
 2. Make sure you created an admin account (none are seeded by default)
 3. Create one:
    ```bash
@@ -332,7 +332,8 @@ No default credentials exist. Create accounts with `python scripts/create_admin.
 |------|---------|
 | `.env` | Backend environment variables |
 | `.env.local` | Frontend environment variables |
-| `database/complete_setup.sql` | Database schema and seed data |
+| `supabase/migrations/` | Database schema (apply in order) |
+| `supabase/seed.sql` | Product catalog seed data |
 | `requirements.txt` | Python dependencies |
 | `package.json` | Node.js dependencies |
 

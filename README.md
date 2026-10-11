@@ -81,7 +81,7 @@ See [DATABASE_SETUP.md](DATABASE_SETUP.md) for detailed instructions.
 
 **Quick version:**
 1. Create a free Supabase project at [supabase.com](https://supabase.com/)
-2. In Supabase Dashboard → SQL Editor, run `database/complete_setup.sql`
+2. Apply the schema: `supabase db push --db-url "$DATABASE_URL"`, or run each file in `supabase/migrations/` (then `supabase/seed.sql`) in the SQL Editor
 3. Copy your Supabase credentials
 
 ### 4. Configure Environment Variables
@@ -139,7 +139,7 @@ npm run dev
 
 ## Default Credentials
 
-No default accounts are seeded. After running `database/complete_setup.sql`, create an admin:
+No default accounts are seeded. After applying the database migrations, create an admin:
 
 ```bash
 python scripts/create_admin.py --email you@example.com --name "Your Name"
@@ -166,10 +166,9 @@ You will be prompted for a password (minimum 12 characters). For non-interactive
 │   ├── database.py          # Supabase client
 │   └── db_pg.py            # Direct PostgreSQL connection
 ├── components/              # React components
-├── database/               # Database setup and migrations
-│   ├── complete_setup.sql # Complete database setup (USE THIS)
-│   ├── init.sql           # Basic table creation
-│   └── migrations/        # Schema migrations
+├── supabase/               # Database (Supabase CLI layout)
+│   ├── migrations/        # Schema migrations, applied in filename order
+│   └── seed.sql           # Product catalog seed data
 ├── lib/                    # Shared utilities
 ├── scripts/                # Utility scripts
 │   ├── create_admin.py    # Create admin users
@@ -297,9 +296,9 @@ pylint app/
 
 After making schema changes:
 
-1. Create migration SQL in `database/migrations/`
-2. Run migration in Supabase SQL Editor
-3. Document in migration file
+1. `supabase migration new <short_name>` (creates a timestamped file in `supabase/migrations/`)
+2. Write the SQL in that file
+3. Apply it: `supabase db push --db-url "$DATABASE_URL"`
 
 ## Troubleshooting
 

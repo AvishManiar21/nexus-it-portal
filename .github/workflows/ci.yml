@@ -40,5 +40,5 @@ jobs:
             requirements.txt
             requirements-dev.txt
       - run: pip install -r requirements-dev.txt
-      - run: python -m compileall -q app scripts database main.py
+      - run: python -m compileall -q app scripts main.py
       - run: python -m pytest -q tests
