@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, EmailStr
 from supabase import Client
 import bcrypt
@@ -7,6 +7,7 @@ import os
 from datetime import datetime, timedelta, timezone
 
 from app.database import get_db
+from app.rate_limit import limiter, LOGIN_LIMIT
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -26,7 +27,8 @@ class LoginResponse(BaseModel):
 
 
 @router.post("/login", response_model=LoginResponse)
-def login(request: LoginRequest, db: Client = Depends(get_db)):
+@limiter.limit(LOGIN_LIMIT)
+def login(request: Request, credentials: LoginRequest, db: Client = Depends(get_db)):
     # Generic error message — does not reveal which specific field was wrong
     invalid_msg = "Invalid email or password"
 
@@ -34,7 +36,7 @@ def login(request: LoginRequest, db: Client = Depends(get_db)):
     result = (
         db.table("admin_users")
         .select("id, email, password_hash, name")
-        .eq("email", request.email)
+        .eq("email", credentials.email)
         .execute()
     )
 
@@ -44,7 +46,7 @@ def login(request: LoginRequest, db: Client = Depends(get_db)):
     user = result.data[0]
 
     if not bcrypt.checkpw(
-        request.password.encode("utf-8"),
+        credentials.password.encode("utf-8"),
         user["password_hash"].encode("utf-8"),
     ):
         raise HTTPException(status_code=401, detail=invalid_msg)

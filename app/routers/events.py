@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 import asyncpg
 
 from app.db_pg import get_pool
+from app.rate_limit import limiter, EVENT_LIMIT
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -13,7 +14,8 @@ class ProductViewEvent(BaseModel):
 
 
 @router.post("/product-view")
-async def record_product_view(event: ProductViewEvent):
+@limiter.limit(EVENT_LIMIT)
+async def record_product_view(request: Request, event: ProductViewEvent):
     print(f"[VIEW] Received: session={event.session_id}, product={event.product_id}")
     try:
         pool = await get_pool()
@@ -43,7 +45,8 @@ class VideoEngagementEvent(BaseModel):
 
 
 @router.post("/video-engagement")
-async def record_video_engagement(event: VideoEngagementEvent):
+@limiter.limit(EVENT_LIMIT)
+async def record_video_engagement(request: Request, event: VideoEngagementEvent):
     if event.event_type not in ("start", "complete"):
         raise HTTPException(status_code=400, detail="Invalid event_type")
     print(
