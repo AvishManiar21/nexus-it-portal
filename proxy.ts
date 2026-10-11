@@ -9,6 +9,10 @@ const SESSION_TIMEOUT_MINUTES = 15;
 
 const isDev = process.env.NODE_ENV !== "production";
 
+// Production redirects HTTP to HTTPS. FORCE_HTTPS=false turns that off for a
+// production build served over plain http://localhost (docker compose).
+const forceHttps = !isDev && process.env.FORCE_HTTPS !== "false";
+
 // Next.js inlines bootstrap scripts, so script-src needs 'unsafe-inline' (no
 // nonce setup); dev additionally needs 'unsafe-eval' and a websocket for HMR.
 // YouTube serves the IFrame API script and the embedded player. Product
@@ -42,14 +46,12 @@ const publicRoutes = ["/admin/login"];
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  // HTTPS redirect in production
-  if (
-    process.env.NODE_ENV === "production" &&
-    request.headers.get("x-forwarded-proto") !== "https"
-  ) {
-    const httpsUrl = new URL(request.nextUrl);
-    httpsUrl.protocol = "https";
-    return NextResponse.redirect(httpsUrl.toString(), 301);
+  // HTTPS redirect in production. Use the Host the visitor asked for:
+  // request.nextUrl carries the server's bind address (e.g. 0.0.0.0:3000).
+  if (forceHttps && request.headers.get("x-forwarded-proto") !== "https") {
+    const host = request.headers.get("host") ?? request.nextUrl.host;
+    const { pathname, search } = request.nextUrl;
+    return NextResponse.redirect(`https://${host}${pathname}${search}`, 301);
   }
 
   // Allow public routes (login page)

@@ -1,24 +1,29 @@
-import { BACKEND_API_URL } from "@/lib/backend";
+import { BACKEND_SERVER_URL } from "@/lib/backend";
 import { cookies } from "next/headers";
 
-const API_URL = BACKEND_API_URL;
+const API_URL = BACKEND_SERVER_URL;
 
-async function apiFetch<T>(path: string, cacheOption?: RequestCache): Promise<T> {
-  // Get cookies from the incoming request to forward to the backend
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get("session");
+// Public catalog data: cached and revalidated every 60s.
+async function publicFetch<T>(path: string): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, { next: { revalidate: 60 } });
+  if (!res.ok) {
+    throw new Error(`API error ${res.status}: ${res.statusText}`);
+  }
+  return res.json();
+}
 
+// Admin data: forwards the visitor's session cookie and is never cached.
+// Reading cookies() makes the calling page dynamic, so public pages must not
+// come through here (that would also turn the error below into an empty,
+// statically rendered page at build time).
+async function adminFetch<T>(path: string): Promise<T> {
+  const sessionCookie = (await cookies()).get("session");
   const headers: HeadersInit = {};
   if (sessionCookie) {
     headers.Cookie = `session=${sessionCookie.value}`;
   }
 
-  const res = await fetch(`${API_URL}${path}`, {
-    cache: cacheOption || "force-cache",
-    next: { revalidate: 60 },
-    headers,
-    credentials: "include"  // Send cookies for authentication
-  });
+  const res = await fetch(`${API_URL}${path}`, { cache: "no-store", headers });
   if (!res.ok) {
     throw new Error(`API error ${res.status}: ${res.statusText}`);
   }
@@ -38,7 +43,7 @@ export interface Product {
 
 export async function fetchProducts(): Promise<Product[]> {
   try {
-    return await apiFetch<Product[]>("/products/");
+    return await publicFetch<Product[]>("/products/");
   } catch (error) {
     console.error("Failed to fetch products:", error);
     return [];
@@ -47,7 +52,7 @@ export async function fetchProducts(): Promise<Product[]> {
 
 export async function fetchProduct(id: number): Promise<Product | null> {
   try {
-    return await apiFetch<Product>(`/products/${id}`);
+    return await publicFetch<Product>(`/products/${id}`);
   } catch (error) {
     console.error(`Failed to fetch product ${id}:`, error);
     return null;
@@ -112,7 +117,7 @@ export interface LeadProfile {
 
 export async function fetchLeadProfile(id: number): Promise<LeadProfile | null> {
   try {
-    return await apiFetch<LeadProfile>(`/leads/${id}/profile`, "no-store");
+    return await adminFetch<LeadProfile>(`/leads/${id}/profile`);
   } catch (error) {
     console.error(`Failed to fetch lead profile ${id}:`, error);
     return null;
@@ -147,7 +152,7 @@ export interface LeadScoreSummary {
 
 export async function fetchLeadInsights(id: number): Promise<LeadInsights | null> {
   try {
-    return await apiFetch<LeadInsights>(`/leads/${id}/insights`, "no-store");
+    return await adminFetch<LeadInsights>(`/leads/${id}/insights`);
   } catch (error) {
     console.error(`Failed to fetch lead insights ${id}:`, error);
     return null;
@@ -165,7 +170,7 @@ export async function fetchLeads(
   if (sortOrder) params.set("sort_order", sortOrder);
   const qs = params.toString();
   try {
-    return await apiFetch<Lead[]>(`/leads/${qs ? `?${qs}` : ""}`, "no-store");
+    return await adminFetch<Lead[]>(`/leads/${qs ? `?${qs}` : ""}`);
   } catch (error) {
     console.error("Failed to fetch leads:", error);
     return [];
