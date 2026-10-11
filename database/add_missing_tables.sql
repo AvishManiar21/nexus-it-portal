@@ -15,7 +15,7 @@ CREATE INDEX IF NOT EXISTS idx_anonymous_engagement_session ON anonymous_engagem
 CREATE INDEX IF NOT EXISTS idx_anonymous_engagement_product ON anonymous_engagement_logs(product_id);
 CREATE INDEX IF NOT EXISTS idx_anonymous_engagement_created ON anonymous_engagement_logs(created_at);
 
-ALTER TABLE anonymous_engagement_logs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE anonymous_engagement_logs ENABLE ROW LEVEL SECURITY;
 
 -- 2. lead_status_audit
 CREATE TABLE IF NOT EXISTS lead_status_audit (
@@ -31,4 +31,4 @@ CREATE INDEX IF NOT EXISTS idx_lead_status_audit_lead_id ON lead_status_audit(le
 CREATE INDEX IF NOT EXISTS idx_lead_status_audit_admin_id ON lead_status_audit(admin_id);
 CREATE INDEX IF NOT EXISTS idx_lead_status_audit_created_at ON lead_status_audit(created_at);
 
-ALTER TABLE lead_status_audit DISABLE ROW LEVEL SECURITY;
+ALTER TABLE lead_status_audit ENABLE ROW LEVEL SECURITY;

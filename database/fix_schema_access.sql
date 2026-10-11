@@ -18,7 +18,7 @@ CREATE INDEX idx_anonymous_engagement_session ON public.anonymous_engagement_log
 CREATE INDEX idx_anonymous_engagement_product ON public.anonymous_engagement_logs(product_id);
 CREATE INDEX idx_anonymous_engagement_created ON public.anonymous_engagement_logs(created_at);
 
-ALTER TABLE public.anonymous_engagement_logs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.anonymous_engagement_logs ENABLE ROW LEVEL SECURITY;
 
 -- Drop and recreate lead_status_audit in public schema
 DROP TABLE IF EXISTS public.lead_status_audit CASCADE;
@@ -36,7 +36,7 @@ CREATE INDEX idx_lead_status_audit_lead_id ON public.lead_status_audit(lead_id);
 CREATE INDEX idx_lead_status_audit_admin_id ON public.lead_status_audit(admin_id);
 CREATE INDEX idx_lead_status_audit_created_at ON public.lead_status_audit(created_at);
 
-ALTER TABLE public.lead_status_audit DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.lead_status_audit ENABLE ROW LEVEL SECURITY;
 
 -- Notify PostgREST to reload schema
 NOTIFY pgrst, 'reload schema';

@@ -3,7 +3,6 @@ from pydantic import BaseModel, EmailStr, field_validator
 from supabase import Client
 from typing import List, Optional
 import os
-from supabase import create_client
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -15,10 +14,9 @@ from app.dependencies.auth import get_current_admin
 
 router = APIRouter(prefix="/leads", tags=["leads"])
 
-# Initialize Supabase
-supabase_url = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
-supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
-supabase = create_client(supabase_url, supabase_key)
+# Shared service-role client (app/database.py requires SUPABASE_SERVICE_ROLE_KEY;
+# the anon key cannot work here because RLS denies it everything)
+supabase = get_db()
 
 # Email configuration
 SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
