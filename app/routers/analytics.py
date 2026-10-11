@@ -1,4 +1,3 @@
-import logging
 """
 Analytics dashboard endpoint covering US-22 (lead totals) and US-23
 (engagement / completion-rate analytics).
@@ -9,6 +8,7 @@ PostgREST API cannot reliably persist to — see docs/adr/0001-direct-postgres-f
 consistent perf via parallel query execution.
 """
 import asyncio
+import logging
 from typing import Any, Dict, List, Optional
 
 import asyncpg
