@@ -5,7 +5,7 @@ Analytics dashboard endpoint covering US-22 (lead totals) and US-23
 
 Uses the asyncpg pool directly (NOT the Supabase SDK) so we get reliable
 reads from video_engagement_events and visitor_page_views (which the
-PostgREST API cannot reliably persist to — see KNOWN_ISSUES.md) and
+PostgREST API cannot reliably persist to — see docs/adr/0001-direct-postgres-for-tracking-writes.md) and
 consistent perf via parallel query execution.
 """
 import asyncio

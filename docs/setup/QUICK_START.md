@@ -275,7 +275,7 @@ To enable email confirmations:
 
 ### Run Comprehensive Tests
 
-See [docs/TESTING_CHECKLIST.md](docs/TESTING_CHECKLIST.md) for full test suite.
+See [docs/TESTING_CHECKLIST.md](../archive/TESTING_CHECKLIST.md) for full test suite.
 
 ### Change Admin Password
 
@@ -341,11 +341,11 @@ No default credentials exist. Create accounts with `python scripts/create_admin.
 
 ## Need More Help?
 
-- **Full Setup Guide:** [README.md](README.md)
+- **Full Setup Guide:** [README.md](../../README.md)
 - **Database Details:** [DATABASE_SETUP.md](DATABASE_SETUP.md)
 - **Email Setup:** [SMTP_SETUP_GUIDE.md](SMTP_SETUP_GUIDE.md)
-- **Testing Guide:** [docs/TESTING_CHECKLIST.md](docs/TESTING_CHECKLIST.md)
-- **Known Issues:** [docs/SPRINT_ISSUES_AND_RESOLUTIONS.md](docs/SPRINT_ISSUES_AND_RESOLUTIONS.md)
+- **Testing Guide:** [docs/TESTING_CHECKLIST.md](../archive/TESTING_CHECKLIST.md)
+- **Known Issues:** [docs/SPRINT_ISSUES_AND_RESOLUTIONS.md](../archive/SPRINT_ISSUES_AND_RESOLUTIONS.md)
 
 ---
 

@@ -77,7 +77,7 @@ pip install -r requirements.txt
 
 ### 3. Setup Database
 
-See [DATABASE_SETUP.md](DATABASE_SETUP.md) for detailed instructions.
+See [DATABASE_SETUP.md](docs/setup/DATABASE_SETUP.md) for detailed instructions.
 
 **Quick version:**
 1. Create a free Supabase project at [supabase.com](https://supabase.com/)
@@ -183,16 +183,16 @@ You will be prompted for a password (minimum 12 characters). For non-interactive
 ## Documentation
 
 ### Setup Guides
-- **[DATABASE_SETUP.md](DATABASE_SETUP.md)** - Detailed database setup guide
-- **[QUICK_START.md](QUICK_START.md)** - Step-by-step setup checklist
-- **[SMTP_SETUP_GUIDE.md](SMTP_SETUP_GUIDE.md)** - Email configuration guide
+- **[DATABASE_SETUP.md](docs/setup/DATABASE_SETUP.md)** - Detailed database setup guide
+- **[QUICK_START.md](docs/setup/QUICK_START.md)** - Step-by-step setup checklist
+- **[SMTP_SETUP_GUIDE.md](docs/setup/SMTP_SETUP_GUIDE.md)** - Email configuration guide
 
 ### Reference Documentation
 - **[scripts/README.md](scripts/README.md)** - Utility scripts documentation
-- **[docs/TESTING_CHECKLIST.md](docs/TESTING_CHECKLIST.md)** - Comprehensive testing guide
-- **[docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)** - Known issues and workarounds
-- **[docs/SPRINT_ISSUES_AND_RESOLUTIONS.md](docs/SPRINT_ISSUES_AND_RESOLUTIONS.md)** - Development issue log
-- **[docs/US12_VERIFICATION_CHECKLIST.md](docs/US12_VERIFICATION_CHECKLIST.md)** - User story verification
+- **[docs/TESTING_CHECKLIST.md](docs/archive/TESTING_CHECKLIST.md)** - Comprehensive testing guide
+- **[docs/KNOWN_ISSUES.md](docs/adr/0001-direct-postgres-for-tracking-writes.md)** - Known issues and workarounds
+- **[docs/SPRINT_ISSUES_AND_RESOLUTIONS.md](docs/archive/SPRINT_ISSUES_AND_RESOLUTIONS.md)** - Development issue log
+- **[docs/US12_VERIFICATION_CHECKLIST.md](docs/archive/US12_VERIFICATION_CHECKLIST.md)** - User story verification
 
 ## Features
 
@@ -260,7 +260,7 @@ Email features are optional but recommended for production use.
    ```
 4. Test with: `python scripts/test_email.py`
 
-See [SMTP_SETUP_GUIDE.md](SMTP_SETUP_GUIDE.md) for detailed instructions.
+See [SMTP_SETUP_GUIDE.md](docs/setup/SMTP_SETUP_GUIDE.md) for detailed instructions.
 
 ## API Documentation
 
@@ -337,7 +337,7 @@ After making schema changes:
 **Solution:**
 1. For Gmail, use App Password (not regular password)
 2. Test with `python scripts/test_email.py`
-3. See [SMTP_SETUP_GUIDE.md](SMTP_SETUP_GUIDE.md)
+3. See [SMTP_SETUP_GUIDE.md](docs/setup/SMTP_SETUP_GUIDE.md)
 4. Email features are optional - app works without SMTP configured
 
 ### Analytics dashboard shows all zeros
@@ -351,7 +351,7 @@ After making schema changes:
 
 ## Testing
 
-See [docs/TESTING_CHECKLIST.md](docs/TESTING_CHECKLIST.md) for comprehensive testing guide.
+See [docs/TESTING_CHECKLIST.md](docs/archive/TESTING_CHECKLIST.md) for comprehensive testing guide.
 
 **Quick test:**
 1. Browse products at [http://localhost:3000/products](http://localhost:3000/products)
@@ -381,7 +381,7 @@ Update production `.env`:
 
 ## Known Issues
 
-See [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md) for current known issues and workarounds.
+See [docs/KNOWN_ISSUES.md](docs/adr/0001-direct-postgres-for-tracking-writes.md) for current known issues and workarounds.
 
 ## Course Information
 
@@ -407,14 +407,14 @@ This public repository is maintained independently for portfolio purposes.
 
 ## License
 
-This project is created for academic purposes as part of SOFT210 coursework.
+Released under the [MIT License](LICENSE). Originally built as a SOFT210 (Spring 2026) team project at Gannon University.
 
 ## Support
 
 For issues or questions:
 1. Check documentation in this repository
-2. Review [docs/TESTING_CHECKLIST.md](docs/TESTING_CHECKLIST.md) for common scenarios
-3. See [docs/SPRINT_ISSUES_AND_RESOLUTIONS.md](docs/SPRINT_ISSUES_AND_RESOLUTIONS.md) for resolved issues
+2. Review [docs/TESTING_CHECKLIST.md](docs/archive/TESTING_CHECKLIST.md) for common scenarios
+3. See [docs/SPRINT_ISSUES_AND_RESOLUTIONS.md](docs/archive/SPRINT_ISSUES_AND_RESOLUTIONS.md) for resolved issues
 4. Contact course instructor or team members
 
 ---
