@@ -37,7 +37,7 @@ export default function SiteFooter() {
       </div>
 
       <div className="border-t border-slate-800">
-        <div className="container-page flex flex-col gap-2 py-6 text-sm text-slate-500 sm:flex-row sm:justify-between">
+        <div className="container-page flex flex-col gap-2 py-6 text-sm text-slate-400 sm:flex-row sm:justify-between">
           <p>&copy; {new Date().getFullYear()} {SITE_NAME}. All rights reserved.</p>
           <p>
             <Link href="/admin/login" className="hover:text-slate-300">Admin sign in</Link>
