@@ -2,7 +2,7 @@
 Direct Postgres connection pool (asyncpg) for tables that the Supabase
 PostgREST API cannot reliably persist to.
 
-See KNOWN_ISSUES.md: video_engagement_events and visitor_page_views inserts
+See docs/adr/0001-direct-postgres-for-tracking-writes.md: video_engagement_events and visitor_page_views inserts
 return 200 OK from PostgREST but never persist. The fix is to bypass
 PostgREST and talk to Supabase Postgres directly via asyncpg.
 

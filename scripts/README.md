@@ -95,7 +95,7 @@ python scripts/test_email.py
 **Requirements:**
 - SMTP_SERVER, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD in `.env`
 - For Gmail: App Password (not regular password)
-- See `SMTP_SETUP_GUIDE.md` for setup instructions
+- See `docs/setup/SMTP_SETUP_GUIDE.md` for setup instructions
 
 ---
 
@@ -179,7 +179,7 @@ cp .env.example .env
 
 ### SMTP errors
 - For Gmail, you MUST use an App Password, not your regular password
-- See `SMTP_SETUP_GUIDE.md` for detailed setup instructions
+- See `docs/setup/SMTP_SETUP_GUIDE.md` for detailed setup instructions
 - Test with `scripts/test_email.py` first
 
 ### Database connection errors
@@ -218,6 +218,6 @@ Individual script dependencies:
 ## Need Help?
 
 - Check main `README.md` for general setup
-- See `DATABASE_SETUP.md` for database issues
-- See `SMTP_SETUP_GUIDE.md` for email issues
-- See `TESTING_CHECKLIST.md` for comprehensive testing guide
+- See `docs/setup/DATABASE_SETUP.md` for database issues
+- See `docs/setup/SMTP_SETUP_GUIDE.md` for email issues
+- See `docs/archive/TESTING_CHECKLIST.md` for comprehensive testing guide
