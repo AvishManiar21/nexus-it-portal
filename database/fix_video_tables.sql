@@ -18,7 +18,7 @@ CREATE INDEX idx_video_engagement_product_id ON public.video_engagement_events(p
 CREATE INDEX idx_video_engagement_created_at ON public.video_engagement_events(created_at);
 
 -- Disable RLS (Row Level Security)
-ALTER TABLE public.video_engagement_events DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.video_engagement_events ENABLE ROW LEVEL SECURITY;
 
 -- Drop and recreate visitor_page_views
 DROP TABLE IF EXISTS public.visitor_page_views CASCADE;
@@ -35,7 +35,7 @@ CREATE INDEX idx_visitor_page_views_product_id ON public.visitor_page_views(prod
 CREATE INDEX idx_visitor_page_views_viewed_at ON public.visitor_page_views(viewed_at);
 
 -- Disable RLS
-ALTER TABLE public.visitor_page_views DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.visitor_page_views ENABLE ROW LEVEL SECURITY;
 
 -- Force PostgREST to reload schema
 NOTIFY pgrst, 'reload schema';

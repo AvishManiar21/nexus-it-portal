@@ -176,22 +176,23 @@ CREATE INDEX IF NOT EXISTS idx_lead_status_audit_admin_id ON lead_status_audit(a
 CREATE INDEX IF NOT EXISTS idx_lead_status_audit_created_at ON lead_status_audit(created_at);
 
 -- ===================================================================
--- 3. DISABLE ROW LEVEL SECURITY
+-- 3. ENABLE ROW LEVEL SECURITY
 -- ===================================================================
--- The FastAPI backend controls access, not Supabase RLS
+-- RLS on with no policies: anon/authenticated roles get no access through the
+-- Supabase API. The backend uses the service_role key, which bypasses RLS.
 
-ALTER TABLE admin_users DISABLE ROW LEVEL SECURITY;
-ALTER TABLE leads DISABLE ROW LEVEL SECURITY;
-ALTER TABLE products DISABLE ROW LEVEL SECURITY;
-ALTER TABLE demo_sessions DISABLE ROW LEVEL SECURITY;
-ALTER TABLE engagement_logs DISABLE ROW LEVEL SECURITY;
-ALTER TABLE rfd_submissions DISABLE ROW LEVEL SECURITY;
-ALTER TABLE lead_notes DISABLE ROW LEVEL SECURITY;
-ALTER TABLE contact_messages DISABLE ROW LEVEL SECURITY;
-ALTER TABLE anonymous_engagement_logs DISABLE ROW LEVEL SECURITY;
-ALTER TABLE video_engagement_events DISABLE ROW LEVEL SECURITY;
-ALTER TABLE visitor_page_views DISABLE ROW LEVEL SECURITY;
-ALTER TABLE lead_status_audit DISABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE demo_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE engagement_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rfd_submissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lead_notes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE anonymous_engagement_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE video_engagement_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE visitor_page_views ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lead_status_audit ENABLE ROW LEVEL SECURITY;
 
 -- ===================================================================
 -- 4. SEED DATA
