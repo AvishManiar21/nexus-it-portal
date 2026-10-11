@@ -5,7 +5,7 @@ This document provides step-by-step testing instructions for all implemented fea
 ## Prerequisites
 - Frontend running: `npm run dev` on http://localhost:3000
 - Backend running: `python -m uvicorn main:app --reload --port 8000`
-- Admin login credentials: `admin@nexusit.com` / `admin123`
+- An admin account created via `scripts/create_admin.py`
 
 ---
 
@@ -137,8 +137,7 @@ This document provides step-by-step testing instructions for all implemented fea
 2. Try logging in with wrong credentials
    - Expected: Error message "Invalid credentials"
 3. Log in with correct credentials:
-   - Email: `admin@nexusit.com`
-   - Password: `admin123`
+   - Use the admin account created via `scripts/create_admin.py`
 4. Verify you're redirected to `/admin` dashboard
 
 **Expected:** Successful login redirects to admin dashboard

@@ -9,12 +9,14 @@ Creates default admin users in the database.
 
 **Usage:**
 ```bash
-python scripts/create_admin.py
+python scripts/create_admin.py --email you@example.com --name "Your Name"
+# or non-interactively:
+ADMIN_PASSWORD='...' python scripts/create_admin.py --email you@example.com
 ```
 
 **What it does:**
-- Creates `admin@nexusit.com` with password `admin123`
-- Creates `sales@nexusit.com` with password `admin123`
+- Creates one admin user; the password is prompted for (no echo) or read from `ADMIN_PASSWORD`
+- Rejects passwords shorter than 12 characters and never prints the password
 - Uses bcrypt for password hashing
 - Connects via Supabase API
 

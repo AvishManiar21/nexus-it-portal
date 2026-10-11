@@ -111,10 +111,8 @@ def main():
 
     print("\n" + "=" * 70)
     print("✅ Database verification complete!")
-    print("\n👤 Default admin credentials:")
-    print("   Email: admin@nexusit.com")
-    print("   Password: admin123")
-    print("\n⚠️  IMPORTANT: Change the admin password immediately!")
+    print("\n👤 Create an admin account with:")
+    print('   python scripts/create_admin.py --email you@example.com --name "Your Name"')
     print("=" * 70)
 
     return 0

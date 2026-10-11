@@ -2,9 +2,19 @@
 # -*- coding: utf-8 -*-
 """
 Create Admin User Script
-Creates a new admin user in the database
+Creates a new admin user in the database.
+
+The password is never hardcoded or printed. It is read from the
+ADMIN_PASSWORD environment variable (for automation) or prompted for
+interactively without echo.
+
+Usage:
+    python scripts/create_admin.py --email admin@example.com --name "Admin User"
+    ADMIN_PASSWORD='...' python scripts/create_admin.py --email ops@example.com
 """
 
+import argparse
+import getpass
 import os
 import sys
 from supabase import create_client, Client
@@ -18,100 +28,77 @@ if sys.platform == "win32":
 # Load environment variables
 load_dotenv()
 
+MIN_PASSWORD_LENGTH = 12
+
+
 def hash_password(password: str) -> str:
     """Hash a password using bcrypt"""
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
+
+def read_password() -> str:
+    """Read the password from ADMIN_PASSWORD or prompt for it (with confirmation)."""
+    password = os.getenv("ADMIN_PASSWORD")
+    if password is None:
+        password = getpass.getpass("Password: ")
+        if getpass.getpass("Confirm password: ") != password:
+            raise ValueError("Passwords do not match")
+    if len(password) < MIN_PASSWORD_LENGTH:
+        raise ValueError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters")
+    return password
+
+
 def main():
+    parser = argparse.ArgumentParser(description="Create an admin user")
+    parser.add_argument("--email", default=os.getenv("ADMIN_EMAIL"), help="Admin email (or ADMIN_EMAIL)")
+    parser.add_argument("--name", default=os.getenv("ADMIN_NAME", "Admin User"), help="Display name (or ADMIN_NAME)")
+    args = parser.parse_args()
+
+    if not args.email:
+        parser.error("--email is required (or set ADMIN_EMAIL)")
+
     # Get Supabase credentials
-    supabase_url = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
-    supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+    supabase_url = os.getenv("SUPABASE_URL")
+    supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
     if not supabase_url or not supabase_key:
         print("Error: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env file")
         return 1
 
-    print("Creating Admin User")
-    print("=" * 60)
+    try:
+        password = read_password()
+    except ValueError as e:
+        print(f"Error: {e}")
+        return 1
+
+    print(f"Creating admin user {args.email} ({args.name})")
 
     # Initialize Supabase client
     supabase: Client = create_client(supabase_url, supabase_key)
 
-    # Default admin credentials
-    email = "admin@nexusit.com"
-    password = "admin123"
-    name = "Admin User"
-
-    print(f"\nEmail: {email}")
-    print(f"Name: {name}")
-    print(f"Password: {password}")
-    print("\nWARNING: Change this password immediately after first login!")
-
-    # Hash the password
-    password_hash = hash_password(password)
-
     try:
-        # Insert admin user
         result = supabase.table("admin_users").insert({
-            "email": email,
-            "password_hash": password_hash,
-            "name": name
+            "email": args.email,
+            "password_hash": hash_password(password),
+            "name": args.name,
         }).execute()
 
-        if result.data:
-            print("\n✅ Admin user created successfully!")
-            print(f"\nLogin credentials:")
-            print(f"   Email: {email}")
-            print(f"   Password: {password}")
-            print("\n⚠️  IMPORTANT: Change this password after first login!")
-        else:
-            print("\n❌ Failed to create admin user")
+        if not result.data:
+            print("❌ Failed to create admin user")
             return 1
 
     except Exception as e:
         error_msg = str(e)
         if "duplicate key" in error_msg.lower() or "unique" in error_msg.lower():
-            print("\n⚠️  Admin user already exists!")
-            print(f"\nExisting login credentials:")
-            print(f"   Email: {email}")
-            print(f"   Password: {password}")
+            print(f"⚠️  Admin user already exists: {args.email}")
         else:
-            print(f"\n❌ Error: {error_msg}")
-            return 1
+            print(f"❌ Error: {error_msg}")
+        return 1
 
-    # Also create a sales manager account
-    print("\n" + "=" * 60)
-    print("Creating Sales Manager User")
-    print("=" * 60)
-
-    sales_email = "sales@nexusit.com"
-    sales_name = "Sales Manager"
-    sales_password_hash = hash_password(password)
-
-    try:
-        result = supabase.table("admin_users").insert({
-            "email": sales_email,
-            "password_hash": sales_password_hash,
-            "name": sales_name
-        }).execute()
-
-        if result.data:
-            print(f"\n✅ Sales manager created successfully!")
-            print(f"\nLogin credentials:")
-            print(f"   Email: {sales_email}")
-            print(f"   Password: {password}")
-        else:
-            print("\n⚠️  Could not create sales manager")
-
-    except Exception as e:
-        if "duplicate key" in str(e).lower() or "unique" in str(e).lower():
-            print(f"\n⚠️  Sales manager already exists: {sales_email}")
-        else:
-            print(f"\n⚠️  Error creating sales manager: {str(e)}")
-
-    print("\n" + "=" * 60)
+    print("✅ Admin user created successfully!")
     return 0
 
+
 if __name__ == "__main__":
-    exit(main())
+    sys.exit(main())

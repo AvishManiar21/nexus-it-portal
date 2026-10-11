@@ -176,9 +176,7 @@ If you see errors, check:
 
 3. Open browser to [http://localhost:3000/admin/login](http://localhost:3000/admin/login)
 
-4. Log in with default credentials:
-   - Email: `admin@nexusit.com`
-   - Password: `admin123`
+4. Log in with the admin account you created via `python scripts/create_admin.py --email you@example.com --name "Your Name"`
 
 5. You should see the admin dashboard with analytics and sample data
 
@@ -306,8 +304,7 @@ The database consists of 12 tables:
 After running `complete_setup.sql`, you'll have:
 
 ### Admin Users
-- `admin@nexusit.com` / `admin123` (Admin role)
-- `sales@nexusit.com` / `admin123` (Sales role)
+None — create them with `python scripts/create_admin.py --email you@example.com --name "Your Name"`.
 
 ### Products
 1. Cloud Infrastructure Solutions
@@ -340,7 +337,7 @@ After database setup is complete:
 
 Before deploying to production:
 
-- [ ] Change default admin passwords from `admin123`
+- [ ] Use strong, unique admin passwords (12+ characters)
 - [ ] Use strong, unique `SESSION_SECRET`
 - [ ] Rotate `SERVICE_ROLE_KEY` if exposed
 - [ ] Enable database backups in Supabase
