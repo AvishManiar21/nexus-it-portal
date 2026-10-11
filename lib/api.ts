@@ -119,6 +119,32 @@ export async function fetchLeadProfile(id: number): Promise<LeadProfile | null> 
   }
 }
 
+export interface LeadInsights {
+  score: {
+    points: number;
+    label: "hot" | "warm" | "cold";
+    breakdown: { reason: string; points: number }[];
+  };
+  insight: {
+    summary: string;
+    next_step: string;
+    email_subject: string;
+    email_body: string;
+    model: string;
+    generated_at: string;
+  } | null;
+  stale: boolean;
+}
+
+export async function fetchLeadInsights(id: number): Promise<LeadInsights | null> {
+  try {
+    return await apiFetch<LeadInsights>(`/leads/${id}/insights`, "no-store");
+  } catch (error) {
+    console.error(`Failed to fetch lead insights ${id}:`, error);
+    return null;
+  }
+}
+
 export async function fetchLeads(
   search?: string,
   sortBy?: string,

@@ -2,7 +2,8 @@ import { getSession } from "@/app/lib/session";
 import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { fetchLeadProfile } from "@/lib/api";
+import { fetchLeadInsights, fetchLeadProfile } from "@/lib/api";
+import LeadInsights from "@/components/LeadInsights";
 import LeadNotes from "@/components/LeadNotes";
 import LeadStatusSelector from "@/components/LeadStatusSelector";
 import LeadStatusHistory from "@/components/LeadStatusHistory";
@@ -51,7 +52,10 @@ export default async function LeadProfilePage({ params }: Props) {
   }
 
   const { id } = await params;
-  const profile = await fetchLeadProfile(Number(id));
+  const [profile, insights] = await Promise.all([
+    fetchLeadProfile(Number(id)),
+    fetchLeadInsights(Number(id)),
+  ]);
 
   if (!profile) {
     notFound();
@@ -145,6 +149,9 @@ export default async function LeadProfilePage({ params }: Props) {
             </div>
           </div>
         </div>
+
+        {/* Rules-based score + AI-written summary and follow-up draft */}
+        <LeadInsights leadId={lead.id} leadEmail={lead.email} initial={insights} />
 
         {/* Two-column layout for submissions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
