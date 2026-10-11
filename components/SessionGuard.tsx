@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 
 // Must match the server-side SESSION_TIMEOUT_MINUTES in app/lib/session.ts
 const TIMEOUT_MINUTES = 15;
@@ -25,6 +26,7 @@ export default function SessionGuard() {
   // Set on mount (not during render) so the first refresh still waits a full throttle window
   const lastRefreshRef = useRef<number>(0);
   const [showWarning, setShowWarning] = useState(false);
+  const router = useRouter();
 
   const handleExpiry = useCallback(async () => {
     // Delete the server-side session cookie before redirecting
@@ -33,8 +35,8 @@ export default function SessionGuard() {
     } catch {
       // Redirect regardless — middleware will catch invalid sessions
     }
-    window.location.href = "/admin/login?expired=1";
-  }, []);
+    router.replace("/admin/login?expired=1");
+  }, [router]);
 
   const refreshServerSession = useCallback(() => {
     const now = Date.now();

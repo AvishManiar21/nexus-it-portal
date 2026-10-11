@@ -42,3 +42,22 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - run: python -m compileall -q app scripts main.py
       - run: python -m pytest -q tests
+
+  security:
+    name: Security (dependency audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+      - name: npm audit (production dependencies)
+        run: npm audit --omit=dev --audit-level=high
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: pip-audit
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt

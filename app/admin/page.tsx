@@ -124,28 +124,34 @@ export default function AdminPage() {
     fetchData()
   }, [])
 
-  const fetchMetrics = async () => {
-    try {
-      setMetricsLoading(true)
-      setMetricsError("")
-      const res = await fetch(`${BACKEND_API_URL}/analytics/dashboard`, {
-        credentials: "include",
+  // Pure request; callers update state in promise callbacks (safe inside effects)
+  const requestMetrics = async (): Promise<DashboardMetrics> => {
+    const res = await fetch(`${BACKEND_API_URL}/analytics/dashboard`, { credentials: "include" })
+    if (!res.ok) throw new Error(`Request failed with status ${res.status}`)
+    return res.json()
+  }
+
+  const applyMetrics = (promise: Promise<DashboardMetrics>) =>
+    promise
+      .then((data) => {
+        setMetrics(data)
+        setMetricsError("")
       })
-      if (!res.ok) {
-        throw new Error(`Request failed with status ${res.status}`)
-      }
-      const data: DashboardMetrics = await res.json()
-      setMetrics(data)
-    } catch (err) {
-      console.error("Error fetching analytics:", err)
-      setMetricsError("Failed to load analytics metrics")
-    } finally {
-      setMetricsLoading(false)
-    }
+      .catch((err) => {
+        console.error("Error fetching analytics:", err)
+        setMetricsError("Failed to load analytics metrics")
+      })
+      .finally(() => setMetricsLoading(false))
+
+  // Refresh button: show the loading state, then reload
+  const fetchMetrics = () => {
+    setMetricsLoading(true)
+    setMetricsError("")
+    applyMetrics(requestMetrics())
   }
 
   useEffect(() => {
-    fetchMetrics()
+    applyMetrics(requestMetrics())
   }, [])
 
   const demoRequests = leads.filter((lead) => lead.source === "RFD Form")
