@@ -88,7 +88,7 @@ export default function SessionGuard() {
   if (!showWarning) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 max-w-sm rounded-xl bg-amber-50 border border-amber-300 p-4 shadow-lg">
+    <div className="fixed bottom-6 right-6 z-50 max-w-sm rounded-xl bg-amber-50 border border-amber-300 p-4 border border-line">
       <p className="text-sm font-medium text-amber-800">
         Your session will expire in 2 minutes due to inactivity.
       </p>

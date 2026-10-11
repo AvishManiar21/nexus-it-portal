@@ -71,26 +71,26 @@ export default function LeadNotes({ leadId, initialNotes }: LeadNotesProps) {
   };
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-lg shadow">
-      <div className="p-4 border-b border-gray-200 dark:border-zinc-700">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+    <div className="bg-white rounded-lg border border-line">
+      <div className="p-4 border-b border-line">
+        <h2 className="text-lg font-semibold text-ink">
           Internal Notes
         </h2>
       </div>
 
       {/* Note Entry Form */}
-      <div className="p-4 border-b border-gray-200 dark:border-zinc-700">
+      <div className="p-4 border-b border-line">
         <form onSubmit={handleSubmit}>
           <textarea
             value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
             placeholder="Add a note about this lead..."
-            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-zinc-800 dark:text-white resize-none"
+            className="w-full px-3 py-2 border border-line rounded-md focus:outline-none focus:ring-2 focus:ring-brand resize-none"
             rows={3}
             disabled={isSubmitting}
           />
           {error && (
-            <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+            <p className="text-sm text-red-600 mt-1">
               {error}
             </p>
           )}
@@ -98,7 +98,7 @@ export default function LeadNotes({ leadId, initialNotes }: LeadNotesProps) {
             <button
               type="submit"
               disabled={isSubmitting || !newNote.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 bg-brand text-white rounded-md hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isSubmitting ? "Saving..." : "Add Note"}
             </button>
@@ -108,15 +108,15 @@ export default function LeadNotes({ leadId, initialNotes }: LeadNotesProps) {
 
       {/* Notes List */}
       {notes.length === 0 ? (
-        <div className="p-4 text-sm text-gray-500">No notes yet</div>
+        <div className="p-4 text-sm text-muted">No notes yet</div>
       ) : (
-        <div className="divide-y divide-gray-100 dark:divide-zinc-800">
+        <div className="divide-y divide-line">
           {notes.map((note) => (
             <div key={note.id} className="p-4">
-              <p className="text-sm text-gray-900 dark:text-zinc-300 whitespace-pre-wrap">
+              <p className="text-sm text-ink whitespace-pre-wrap">
                 {note.note}
               </p>
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-muted mt-2">
                 {note.author} &middot; {formatDateTime(note.created_at)}
               </p>
             </div>

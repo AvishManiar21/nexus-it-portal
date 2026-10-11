@@ -1,10 +1,11 @@
 "use client"
 
-import { BACKEND_API_URL } from "@/lib/backend";
+import { BACKEND_API_URL } from "@/lib/backend"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { logout } from "@/app/actions/auth"
 import Link from "next/link"
+import { ArrowRight, RefreshCw } from "lucide-react"
+import StatusBadge from "@/components/admin/StatusBadge"
 
 interface Lead {
   id: string
@@ -52,6 +53,21 @@ interface DashboardMetrics {
   }>
 }
 
+function Skeleton({ className }: { className: string }) {
+  return <div className={`animate-pulse rounded bg-slate-200 ${className}`} />
+}
+
+function Card({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
+  return (
+    <section className="rounded-lg border border-line bg-white">
+      <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
+        <h2 className="text-base font-semibold">{title}</h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  )
+}
 
 export default function AdminPage() {
   const router = useRouter()
@@ -132,264 +148,164 @@ export default function AdminPage() {
     fetchMetrics()
   }, [])
 
+  const demoRequests = leads.filter((lead) => lead.source === "RFD Form")
+
+  const kpis = [
+    { label: "Total leads", value: metrics?.total_leads ?? 0 },
+    { label: "New this week", value: metrics?.new_leads_this_week ?? 0 },
+    { label: "Demo requests", value: metrics?.total_rfd_submissions ?? 0 },
+    { label: "Conversion rate", value: `${Math.round((metrics?.conversion_rate ?? 0) * 100)}%`, hint: "Contacted or converted" },
+  ]
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-gray-600 mt-2">Manage leads and customer inquiries</p>
-          </div>
-          <form action={logout}>
-            <button
-              type="submit"
-              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
-            >
-              Sign Out
-            </button>
-          </form>
+    <div className="container-page py-10">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-semibold">Dashboard</h1>
+          <p className="mt-1">Leads, engagement and enquiries at a glance.</p>
         </div>
-
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800">{error}</p>
-          </div>
-        )}
-
-        {/* Quick Actions */}
-        <div className="mb-8">
-          <Link
-            href="/admin/leads"
-            className="inline-block px-5 py-3 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
-          >
-            Search &amp; Sort All Leads
+        <div className="flex items-center gap-3">
+          {metricsError && <span className="text-sm text-red-700">{metricsError}</span>}
+          <button type="button" onClick={fetchMetrics} disabled={metricsLoading} className="btn btn-secondary">
+            <RefreshCw className={`h-4 w-4 ${metricsLoading ? "animate-spin" : ""}`} aria-hidden />
+            {metricsLoading ? "Refreshing" : "Refresh"}
+          </button>
+          <Link href="/admin/leads" className="btn btn-primary">
+            All leads
           </Link>
         </div>
+      </div>
 
-        {/* Analytics Overview */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">Analytics Overview</h2>
-            <div className="flex items-center gap-4">
-              {metricsError && (
-                <span className="text-sm text-red-600">{metricsError}</span>
-              )}
-              <button
-                onClick={fetchMetrics}
-                disabled={metricsLoading}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {metricsLoading ? "Refreshing..." : "Refresh"}
-              </button>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-            {/* Total Leads */}
-            <div className="bg-white rounded-lg shadow p-6 min-h-[180px] flex flex-col">
-              <p className="text-sm font-medium text-gray-600">Total Leads</p>
-              {metricsLoading ? (
-                <div className="mt-2 h-9 w-20 bg-gray-200 rounded animate-pulse" />
-              ) : (
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {metrics?.total_leads ?? 0}
-                </p>
-              )}
-            </div>
-
-            {/* New Leads (Last 7 Days) */}
-            <div className="bg-white rounded-lg shadow p-6 min-h-[180px] flex flex-col">
-              <p className="text-sm font-medium text-gray-600">New Leads (Last 7 Days)</p>
-              {metricsLoading ? (
-                <div className="mt-2 h-9 w-20 bg-gray-200 rounded animate-pulse" />
-              ) : (
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {metrics?.new_leads_this_week ?? 0}
-                </p>
-              )}
-            </div>
-
-            {/* Most-Viewed Product */}
-            <div className="bg-white rounded-lg shadow p-6 min-h-[180px] flex flex-col">
-              <p className="text-sm font-medium text-gray-600">Most-Viewed Product</p>
-              {metricsLoading ? (
-                <>
-                  <div className="mt-2 h-9 w-32 bg-gray-200 rounded animate-pulse" />
-                  <div className="mt-2 h-4 w-20 bg-gray-200 rounded animate-pulse" />
-                </>
-              ) : (
-                <>
-                  <p className="text-2xl font-bold text-gray-900 mt-2 break-words">
-                    {metrics?.most_viewed_product?.name ?? "—"}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {metrics?.most_viewed_product?.view_count ?? 0} views
-                  </p>
-                </>
-              )}
-            </div>
-
-            {/* Demo Completion Rate */}
-            <div className="bg-white rounded-lg shadow p-6 min-h-[180px] flex flex-col">
-              <p className="text-sm font-medium text-gray-600">Demo Completion Rate</p>
-              {metricsLoading ? (
-                <div className="mt-3 space-y-3">
-                  {[0, 1, 2].map((i) => (
-                    <div key={i}>
-                      <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
-                      <div className="mt-1 h-2 w-full bg-gray-200 rounded animate-pulse" />
-                    </div>
-                  ))}
-                </div>
-              ) : metrics?.completion_rates_by_product?.length ? (
-                <div className="mt-3 space-y-3">
-                  {metrics.completion_rates_by_product.map((p) => {
-                    const pct = Math.round((p.completion_rate || 0) * 100)
-                    return (
-                      <div key={p.product_id}>
-                        <div className="flex justify-between text-sm text-gray-700">
-                          <span className="truncate pr-2">{p.name}</span>
-                          <span className="font-medium">{pct}%</span>
-                        </div>
-                        <div className="mt-1 h-2 w-full bg-gray-200 rounded overflow-hidden">
-                          <div
-                            className="h-2 bg-blue-500"
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 mt-2">No demo data yet</p>
-              )}
-            </div>
-          </div>
-
-          {/* Second Row - Additional Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mt-6">
-            {/* Total Contact Messages */}
-            <div className="bg-white rounded-lg shadow p-6 min-h-[180px] flex flex-col">
-              <p className="text-sm font-medium text-gray-600">Contact Messages</p>
-              {metricsLoading ? (
-                <div className="mt-2 h-9 w-20 bg-gray-200 rounded animate-pulse" />
-              ) : (
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {metrics?.total_contact_messages ?? 0}
-                </p>
-              )}
-            </div>
-
-            {/* Total RFD Submissions */}
-            <div className="bg-white rounded-lg shadow p-6 min-h-[180px] flex flex-col">
-              <p className="text-sm font-medium text-gray-600">Demo Requests</p>
-              {metricsLoading ? (
-                <div className="mt-2 h-9 w-20 bg-gray-200 rounded animate-pulse" />
-              ) : (
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {metrics?.total_rfd_submissions ?? 0}
-                </p>
-              )}
-            </div>
-
-            {/* Conversion Rate */}
-            <div className="bg-white rounded-lg shadow p-6 min-h-[180px] flex flex-col">
-              <p className="text-sm font-medium text-gray-600">Lead Conversion Rate</p>
-              {metricsLoading ? (
-                <div className="mt-2 h-9 w-20 bg-gray-200 rounded animate-pulse" />
-              ) : (
-                <>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">
-                    {Math.round((metrics?.conversion_rate ?? 0) * 100)}%
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">Contacted or Converted</p>
-                </>
-              )}
-            </div>
-
-            {/* Leads by Source */}
-            <div className="bg-white rounded-lg shadow p-6 min-h-[180px] flex flex-col">
-              <p className="text-sm font-medium text-gray-600">Leads by Source</p>
-              {metricsLoading ? (
-                <div className="mt-3 space-y-2">
-                  {[0, 1].map((i) => (
-                    <div key={i} className="h-4 w-full bg-gray-200 rounded animate-pulse" />
-                  ))}
-                </div>
-              ) : metrics?.leads_by_source?.length ? (
-                <div className="mt-3 space-y-2">
-                  {metrics.leads_by_source.map((source) => (
-                    <div key={source.source} className="flex justify-between text-sm">
-                      <span className="text-gray-700">{source.source}</span>
-                      <span className="font-medium text-gray-900">{source.count}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 mt-2">No data yet</p>
-              )}
-            </div>
-          </div>
+      {error && (
+        <div role="alert" className="mt-6 rounded-md border border-red-300 bg-red-50 p-4 text-red-900">
+          {error}
         </div>
+      )}
 
-        {/* RFD Leads & Demo Submissions */}
-        <div className="bg-white rounded-lg shadow mb-8">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900">Demo Requests (RFD)</h2>
+      {/* KPIs */}
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {kpis.map((kpi) => (
+          <div key={kpi.label} className="rounded-lg border border-line bg-white p-5">
+            <p className="text-sm font-medium text-muted">{kpi.label}</p>
+            {metricsLoading ? (
+              <Skeleton className="mt-3 h-9 w-20" />
+            ) : (
+              <p className="mt-2 font-heading text-3xl font-semibold tabular-nums text-ink">{kpi.value}</p>
+            )}
+            {kpi.hint && <p className="mt-1 text-xs text-muted">{kpi.hint}</p>}
           </div>
+        ))}
+      </div>
+
+      {/* Engagement */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+        <Card title="Most-viewed solution">
+          <div className="p-5">
+            {metricsLoading ? (
+              <>
+                <Skeleton className="h-7 w-40" />
+                <Skeleton className="mt-2 h-4 w-20" />
+              </>
+            ) : (
+              <>
+                <p className="font-heading text-xl font-semibold text-ink">{metrics?.most_viewed_product?.name ?? "No views yet"}</p>
+                <p className="mt-1 text-sm text-muted">{metrics?.most_viewed_product?.view_count ?? 0} page views</p>
+              </>
+            )}
+          </div>
+        </Card>
+
+        <Card title="Demo video completion">
+          <div className="space-y-4 p-5">
+            {metricsLoading ? (
+              [0, 1, 2].map((i) => <Skeleton key={i} className="h-8 w-full" />)
+            ) : metrics?.completion_rates_by_product?.length ? (
+              metrics.completion_rates_by_product.map((p) => {
+                const pct = Math.round((p.completion_rate || 0) * 100)
+                return (
+                  <div key={p.product_id}>
+                    <div className="flex justify-between gap-2 text-sm">
+                      <span className="truncate text-ink">{p.name}</span>
+                      <span className="font-semibold tabular-nums text-ink">{pct}%</span>
+                    </div>
+                    <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-100" role="presentation">
+                      <div className="h-2 rounded-full bg-brand" style={{ width: `${pct}%` }} />
+                    </div>
+                    <p className="mt-1 text-xs text-muted">{p.completes} of {p.starts} who started finished</p>
+                  </div>
+                )
+              })
+            ) : (
+              <p className="text-sm text-muted">No demo video data yet.</p>
+            )}
+          </div>
+        </Card>
+
+        <Card title="Leads by source">
+          <div className="p-5">
+            {metricsLoading ? (
+              <div className="space-y-2">{[0, 1].map((i) => <Skeleton key={i} className="h-5 w-full" />)}</div>
+            ) : metrics?.leads_by_source?.length ? (
+              <dl className="divide-y divide-line">
+                {metrics.leads_by_source.map((source) => (
+                  <div key={source.source} className="flex justify-between py-2 text-sm first:pt-0 last:pb-0">
+                    <dt>{source.source}</dt>
+                    <dd className="font-semibold tabular-nums text-ink">{source.count}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              <p className="text-sm text-muted">No leads yet.</p>
+            )}
+            <p className="mt-4 border-t border-line pt-3 text-sm text-muted">
+              {metrics?.total_contact_messages ?? 0} contact messages in total
+            </p>
+          </div>
+        </Card>
+      </div>
+
+      {/* Demo requests */}
+      <div className="mt-6">
+        <Card
+          title="Demo requests"
+          action={<Link href="/admin/leads" className="text-sm font-semibold text-brand hover:text-brand-hover">View all leads</Link>}
+        >
           {isLoading ? (
-            <div className="p-6 text-center text-gray-500">Loading...</div>
-          ) : leads.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">No demo requests yet</div>
+            <p className="p-5 text-sm text-muted">Loading…</p>
+          ) : demoRequests.length === 0 ? (
+            <p className="p-5 text-sm text-muted">No demo requests yet.</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Name</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Email</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Company</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Phone</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Status</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Date</th>
+              <table className="w-full text-sm">
+                <thead className="bg-canvas text-left text-xs font-semibold uppercase tracking-wide text-muted">
+                  <tr>
+                    <th scope="col" className="px-5 py-3">Contact</th>
+                    <th scope="col" className="px-5 py-3">Company</th>
+                    <th scope="col" className="px-5 py-3">Status</th>
+                    <th scope="col" className="px-5 py-3">Received</th>
+                    <th scope="col" className="px-5 py-3"><span className="sr-only">Actions</span></th>
                   </tr>
                 </thead>
-                <tbody>
-                  {leads.filter(lead => lead.source === "RFD Form").map((lead) => (
-                    <tr key={lead.id} className="border-b border-gray-200 hover:bg-gray-50 transition">
-                      <td className="px-6 py-4 text-sm text-gray-900">{lead.name}</td>
-                      <td className="px-6 py-4 text-sm">
-                        <a
-                          href={`mailto:${lead.email}`}
-                          className="text-blue-600 hover:underline"
+                <tbody className="divide-y divide-line">
+                  {demoRequests.map((lead) => (
+                    <tr key={lead.id} className="hover:bg-canvas">
+                      <td className="px-5 py-3.5">
+                        <Link href={`/admin/leads/${lead.id}`} className="font-semibold text-ink hover:text-brand">
+                          {lead.name}
+                        </Link>
+                        <p className="text-muted">{lead.email}</p>
+                      </td>
+                      <td className="px-5 py-3.5">{lead.company || "—"}</td>
+                      <td className="px-5 py-3.5"><StatusBadge status={lead.status} /></td>
+                      <td className="px-5 py-3.5 text-muted">{new Date(lead.created_at).toLocaleDateString()}</td>
+                      <td className="px-5 py-3.5 text-right">
+                        <Link
+                          href={`/admin/leads/${lead.id}`}
+                          className="inline-flex items-center gap-1 font-semibold text-brand hover:text-brand-hover"
+                          aria-label={`View ${lead.name}`}
                         >
-                          {lead.email}
-                        </a>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{lead.company || "-"}</td>
-                      <td className="px-6 py-4 text-sm">
-                        {lead.phone ? (
-                          <a href={`tel:${lead.phone}`} className="text-blue-600 hover:underline">
-                            {lead.phone}
-                          </a>
-                        ) : (
-                          "-"
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                          lead.status === "new"
-                            ? "bg-green-100 text-green-800"
-                            : lead.status === "contacted"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}>
-                          {lead.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {new Date(lead.created_at).toLocaleDateString()}
+                          View <ArrowRight className="h-4 w-4" aria-hidden />
+                        </Link>
                       </td>
                     </tr>
                   ))}
@@ -397,49 +313,40 @@ export default function AdminPage() {
               </table>
             </div>
           )}
-        </div>
+        </Card>
+      </div>
 
-        {/* Contact Messages */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900">Contact Form Submissions</h2>
-          </div>
+      {/* Contact messages */}
+      <div className="mt-6">
+        <Card title="Contact messages">
           {isLoading ? (
-            <div className="p-6 text-center text-gray-500">Loading...</div>
+            <p className="p-5 text-sm text-muted">Loading…</p>
           ) : contactMessages.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">No contact submissions yet</div>
+            <p className="p-5 text-sm text-muted">No contact messages yet.</p>
           ) : (
-            <div className="divide-y divide-gray-200">
+            <ul className="divide-y divide-line">
               {contactMessages.map((message) => (
-                <div key={message.id} className="p-6 hover:bg-gray-50 transition">
-                  <div className="flex items-start justify-between mb-3">
+                <li key={message.id} className="px-5 py-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{message.subject}</h3>
-                      <p className="text-sm text-gray-600">
-                        From: <a href={`mailto:${message.email}`} className="text-blue-600 hover:underline">
-                          {message.name} ({message.email})
-                        </a>
+                      <h3 className="text-base font-semibold">{message.subject}</h3>
+                      <p className="mt-0.5 text-sm text-muted">
+                        From{" "}
+                        <Link href={`/admin/leads/${message.lead_id}`} className="font-medium text-brand hover:text-brand-hover">
+                          {message.name}
+                        </Link>{" "}
+                        · {message.email}
                       </p>
                     </div>
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                      message.status === "new"
-                        ? "bg-green-100 text-green-800"
-                        : message.status === "read"
-                        ? "bg-blue-100 text-blue-800"
-                        : "bg-gray-100 text-gray-800"
-                    }`}>
-                      {message.status}
-                    </span>
+                    <StatusBadge status={message.status} />
                   </div>
-                  <p className="text-gray-700 mb-3 whitespace-pre-wrap">{message.message}</p>
-                  <p className="text-xs text-gray-500">
-                    {new Date(message.created_at).toLocaleString()}
-                  </p>
-                </div>
+                  <p className="mt-2 whitespace-pre-wrap text-sm">{message.message}</p>
+                  <p className="mt-2 text-xs text-muted">{new Date(message.created_at).toLocaleString()}</p>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   )

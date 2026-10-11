@@ -7,19 +7,12 @@ import LeadInsights from "@/components/LeadInsights";
 import LeadNotes from "@/components/LeadNotes";
 import LeadStatusSelector from "@/components/LeadStatusSelector";
 import LeadStatusHistory from "@/components/LeadStatusHistory";
+import StatusBadge from "@/components/admin/StatusBadge";
+import { ArrowLeft } from "lucide-react";
 
 interface Props {
   params: Promise<{ id: string }>;
 }
-
-const STATUS_COLORS: Record<string, string> = {
-  new: "bg-blue-100 text-blue-800",
-  contacted: "bg-yellow-100 text-yellow-800",
-  qualified: "bg-green-100 text-green-800",
-  lost: "bg-red-100 text-red-800",
-  pending: "bg-orange-100 text-orange-800",
-  read: "bg-gray-100 text-gray-800",
-};
 
 function formatDateTime(dateStr: string) {
   return new Date(dateStr).toLocaleString("en-US", {
@@ -39,11 +32,25 @@ function formatDate(dateStr: string) {
   });
 }
 
+// Brand color marks high-intent events; page views stay neutral
 const TIMELINE_COLORS: Record<string, string> = {
-  "Page View": "bg-indigo-500",
-  "Demo Video": "bg-emerald-500",
-  "RFD Submission": "bg-orange-500",
+  "Page View": "bg-slate-400",
+  "Demo Video": "bg-brand",
+  "RFD Submission": "bg-brand",
 };
+
+const TIMELINE_VISIBLE = 8;
+
+function TimelineItem({ event }: { event: { type: string; details: string | null; occurred_at: string } }) {
+  return (
+    <li className="relative mb-5 ml-6 last:mb-0">
+      <span className={`absolute -left-[31px] top-1 h-4 w-4 rounded-full border-2 border-white ${TIMELINE_COLORS[event.type] || "bg-brand"}`} />
+      <p className="text-sm font-medium text-ink">{event.type}</p>
+      {event.details && <p className="text-sm text-body">{event.details}</p>}
+      <p className="mt-1 text-xs text-muted">{formatDateTime(event.occurred_at)}</p>
+    </li>
+  );
+}
 
 export default async function LeadProfilePage({ params }: Props) {
   const session = await getSession();
@@ -63,28 +70,30 @@ export default async function LeadProfilePage({ params }: Props) {
 
   const { lead, rfd_submissions, contact_messages, timeline, notes, status_history } = profile;
 
+  // Newest first; long histories show the latest events and fold the rest
+  const newestFirst = [...timeline].reverse();
+  const recentEvents = newestFirst.slice(0, TIMELINE_VISIBLE);
+  const olderEvents = newestFirst.slice(TIMELINE_VISIBLE);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-zinc-950 dark:to-zinc-900 p-8">
-      <div className="max-w-5xl mx-auto">
+    <div className="container-page py-10">
+      <div className="mx-auto max-w-5xl">
         {/* Navigation */}
         <div className="mb-6">
-          <Link
-            href="/admin/leads"
-            className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-          >
-            &larr; Back to Lead Management
+          <Link href="/admin/leads" className="inline-flex items-center gap-1.5 text-[15px] font-medium text-muted hover:text-ink">
+            <ArrowLeft className="h-4 w-4" aria-hidden /> All leads
           </Link>
         </div>
 
         {/* Header */}
-        <div className="bg-white dark:bg-zinc-900 rounded-lg shadow p-6 mb-6">
+        <div className="bg-white rounded-lg border border-line p-6 mb-6">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-3xl font-semibold">
                 {lead.name}
               </h1>
               {lead.company && (
-                <p className="text-lg text-gray-600 dark:text-zinc-400 mt-1">
+                <p className="text-lg text-body mt-1">
                   {lead.company}
                 </p>
               )}
@@ -98,52 +107,52 @@ export default async function LeadProfilePage({ params }: Props) {
           {/* Contact Details */}
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wide">
+              <p className="text-xs font-medium text-muted uppercase tracking-wide">
                 Email
               </p>
               <a
                 href={`mailto:${lead.email}`}
-                className="text-sm text-blue-600 hover:underline dark:text-blue-400"
+                className="text-sm text-brand hover:underline"
               >
                 {lead.email}
               </a>
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wide">
+              <p className="text-xs font-medium text-muted uppercase tracking-wide">
                 Phone
               </p>
               {lead.phone ? (
                 <a
                   href={`tel:${lead.phone}`}
-                  className="text-sm text-blue-600 hover:underline dark:text-blue-400"
+                  className="text-sm text-brand hover:underline"
                 >
                   {lead.phone}
                 </a>
               ) : (
-                <p className="text-sm text-gray-400">--</p>
+                <p className="text-sm text-muted">--</p>
               )}
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wide">
+              <p className="text-xs font-medium text-muted uppercase tracking-wide">
                 Budget Range
               </p>
-              <p className="text-sm text-gray-900 dark:text-zinc-300">
+              <p className="text-sm text-ink">
                 {lead.budget || "--"}
               </p>
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wide">
+              <p className="text-xs font-medium text-muted uppercase tracking-wide">
                 Source
               </p>
-              <p className="text-sm text-gray-900 dark:text-zinc-300">
+              <p className="text-sm text-ink">
                 {lead.source || "--"}
               </p>
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wide">
+              <p className="text-xs font-medium text-muted uppercase tracking-wide">
                 Lead Since
               </p>
-              <p className="text-sm text-gray-900 dark:text-zinc-300">
+              <p className="text-sm text-ink">
                 {formatDate(lead.created_at)}
               </p>
             </div>
@@ -156,39 +165,32 @@ export default async function LeadProfilePage({ params }: Props) {
         {/* Two-column layout for submissions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* RFD Submissions */}
-          <div className="bg-white dark:bg-zinc-900 rounded-lg shadow">
-            <div className="p-4 border-b border-gray-200 dark:border-zinc-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="bg-white rounded-lg border border-line">
+            <div className="p-4 border-b border-line">
+              <h2 className="text-lg font-semibold">
                 RFD Submissions
               </h2>
             </div>
             {rfd_submissions.length === 0 ? (
-              <div className="p-4 text-sm text-gray-500">
+              <div className="p-4 text-sm text-muted">
                 No RFD submissions
               </div>
             ) : (
-              <div className="divide-y divide-gray-100 dark:divide-zinc-800">
+              <div className="divide-y divide-line">
                 {rfd_submissions.map((rfd) => (
                   <div key={rfd.id} className="p-4">
                     <div className="flex items-center justify-between mb-1">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      <p className="text-sm font-medium text-ink">
                         {rfd.products?.name || `Product #${rfd.product_id}`}
                       </p>
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
-                          STATUS_COLORS[rfd.status] ||
-                          "bg-zinc-100 text-zinc-800"
-                        }`}
-                      >
-                        {rfd.status}
-                      </span>
+                      <StatusBadge status={rfd.status} />
                     </div>
                     {rfd.message && (
-                      <p className="text-sm text-gray-600 dark:text-zinc-400 mb-1">
+                      <p className="text-sm text-body mb-1">
                         {rfd.message}
                       </p>
                     )}
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-muted">
                       {formatDateTime(rfd.created_at)}
                     </p>
                   </div>
@@ -198,37 +200,30 @@ export default async function LeadProfilePage({ params }: Props) {
           </div>
 
           {/* Contact Messages */}
-          <div className="bg-white dark:bg-zinc-900 rounded-lg shadow">
-            <div className="p-4 border-b border-gray-200 dark:border-zinc-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="bg-white rounded-lg border border-line">
+            <div className="p-4 border-b border-line">
+              <h2 className="text-lg font-semibold">
                 Contact Messages
               </h2>
             </div>
             {contact_messages.length === 0 ? (
-              <div className="p-4 text-sm text-gray-500">
+              <div className="p-4 text-sm text-muted">
                 No contact messages
               </div>
             ) : (
-              <div className="divide-y divide-gray-100 dark:divide-zinc-800">
+              <div className="divide-y divide-line">
                 {contact_messages.map((msg) => (
                   <div key={msg.id} className="p-4">
                     <div className="flex items-center justify-between mb-1">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      <p className="text-sm font-medium text-ink">
                         {msg.subject}
                       </p>
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
-                          STATUS_COLORS[msg.status] ||
-                          "bg-zinc-100 text-zinc-800"
-                        }`}
-                      >
-                        {msg.status}
-                      </span>
+                      <StatusBadge status={msg.status} />
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-zinc-400 mb-1">
+                    <p className="text-sm text-body mb-1">
                       {msg.message}
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-muted">
                       {formatDateTime(msg.created_at)}
                     </p>
                   </div>
@@ -239,47 +234,47 @@ export default async function LeadProfilePage({ params }: Props) {
         </div>
 
         {/* Activity Timeline */}
-        <div className="bg-white dark:bg-zinc-900 rounded-lg shadow mb-6">
-          <div className="p-4 border-b border-gray-200 dark:border-zinc-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="bg-white rounded-lg border border-line mb-6">
+          <div className="p-4 border-b border-line">
+            <h2 className="text-lg font-semibold">
               Activity Timeline
             </h2>
           </div>
           {timeline.length === 0 ? (
-            <div className="p-4 text-sm text-gray-500">
+            <div className="p-4 text-sm text-muted">
               No activity recorded
             </div>
           ) : (
             <div className="p-4">
-              <div className="relative border-l-2 border-gray-200 dark:border-zinc-700 ml-3">
-                {timeline.map((event, idx) => (
-                  <div key={idx} className="mb-6 ml-6 relative last:mb-0">
-                    <span className={`absolute -left-[31px] top-1 w-4 h-4 rounded-full border-2 border-white dark:border-zinc-900 ${TIMELINE_COLORS[event.type] || "bg-blue-500"}`} />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {event.type}
-                      </p>
-                      {event.details && (
-                        <p className="text-sm text-gray-600 dark:text-zinc-400">
-                          {event.details}
-                        </p>
-                      )}
-                      <p className="text-xs text-gray-400 mt-1">
-                        {formatDateTime(event.occurred_at)}
-                      </p>
-                    </div>
-                  </div>
+              <ol className="relative ml-3 border-l-2 border-line">
+                {recentEvents.map((event, idx) => (
+                  <TimelineItem key={idx} event={event} />
                 ))}
-              </div>
+              </ol>
+              {olderEvents.length > 0 && (
+                <details className="group mt-2">
+                  <summary className="ml-3 cursor-pointer list-none pl-6 text-sm font-semibold text-brand hover:text-brand-hover [&::-webkit-details-marker]:hidden">
+                    <span className="group-open:hidden">Show {olderEvents.length} earlier events</span>
+                    <span className="hidden group-open:inline">Hide earlier events</span>
+                  </summary>
+                  <ol className="relative ml-3 mt-4 border-l-2 border-line">
+                    {olderEvents.map((event, idx) => (
+                      <TimelineItem key={idx} event={event} />
+                    ))}
+                  </ol>
+                </details>
+              )}
             </div>
           )}
         </div>
 
-        {/* Status Change History */}
-        <LeadStatusHistory statusHistory={status_history || []} />
+        <div className="space-y-6">
+          {/* Status Change History */}
+          <LeadStatusHistory statusHistory={status_history || []} />
 
-        {/* Internal Notes */}
-        <LeadNotes leadId={lead.id} initialNotes={notes} />
+          {/* Internal Notes */}
+          <LeadNotes leadId={lead.id} initialNotes={notes} />
+        </div>
       </div>
     </div>
   );
