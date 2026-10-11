@@ -62,6 +62,7 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault()
+    const website = (e.currentTarget.elements.namedItem("website") as HTMLInputElement | null)?.value || ""
 
     if (validateForm()) {
       setIsLoading(true)
@@ -79,7 +80,7 @@ export default function ContactPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ ...formData, session_id: sessionId || null }),
+          body: JSON.stringify({ ...formData, session_id: sessionId || null, website }),
         })
 
         const data = await response.json()
@@ -148,6 +149,11 @@ export default function ContactPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Honeypot: visually hidden, so only bots fill it in */}
+            <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+              <label htmlFor="website">Website</label>
+              <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+            </div>
             {/* Name */}
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">

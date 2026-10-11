@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { forwardedForHeaders } from "@/app/lib/forwardedFor"
 
 const PYTHON_API_URL = process.env.PYTHON_API_URL || "http://localhost:8000"
 
@@ -10,6 +11,7 @@ export async function POST(request: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...forwardedForHeaders(request.headers),
       },
       body: JSON.stringify(body),
     })

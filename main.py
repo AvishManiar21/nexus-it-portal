@@ -4,6 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from app.routers import products, events, rfd, auth, leads, analytics
 from app.db_pg import close_pool
+from app.rate_limit import limiter
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 import os
 from dotenv import load_dotenv
 
@@ -20,6 +23,10 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Nexus IT Backend", lifespan=lifespan)
+
+# Rate limiting (see app/rate_limit.py); exceeding a limit returns 429
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Configure CORS
 origins = [

@@ -1,7 +1,9 @@
 "use server";
 
 import { createSession, deleteSession } from "@/app/lib/session";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { forwardedForHeaders } from "@/app/lib/forwardedFor";
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:8000";
 
@@ -20,9 +22,13 @@ export async function login(state: LoginState, formData: FormData): Promise<Logi
   try {
     const res = await fetch(`${API_URL}/auth/login`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...forwardedForHeaders(await headers()) },
       body: JSON.stringify({ email, password }),
     });
+
+    if (res.status === 429) {
+      return { error: "Too many login attempts. Please wait a minute and try again." };
+    }
 
     if (!res.ok) {
       const data = await res.json().catch(() => null);

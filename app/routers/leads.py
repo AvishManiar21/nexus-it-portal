@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Query, status, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends, Query, Request, status, BackgroundTasks
 from pydantic import BaseModel, EmailStr, field_validator
 from supabase import Client
 from typing import List, Optional
@@ -12,6 +12,7 @@ import re
 
 from app.database import get_db
 from app.dependencies.auth import get_current_admin
+from app.rate_limit import limiter, FORM_LIMIT
 
 router = APIRouter(prefix="/leads", tags=["leads"])
 
@@ -59,6 +60,8 @@ class RFDSubmission(BaseModel):
     products: List[str]
     message: Optional[str] = None
     session_id: Optional[str] = None
+    # Honeypot: hidden in the form, so only bots fill it in
+    website: Optional[str] = None
 
     @field_validator("company")
     @classmethod
@@ -119,6 +122,8 @@ class ContactSubmission(BaseModel):
     subject: str
     message: str
     session_id: Optional[str] = None
+    # Honeypot: hidden in the form, so only bots fill it in
+    website: Optional[str] = None
 
     @field_validator("name")
     @classmethod
@@ -501,13 +506,18 @@ This confirmation was sent on {timestamp}
 
 
 @router.post("/submit-rfd", response_model=SubmissionResponse)
-async def submit_rfd(submission: RFDSubmission, background_tasks: BackgroundTasks):
+@limiter.limit(FORM_LIMIT)
+async def submit_rfd(request: Request, submission: RFDSubmission, background_tasks: BackgroundTasks):
     """
     Submit RFD with transactional integrity:
     1. Create lead record
     2. Create RFD submission records for each product
     3. Send confirmation email
     """
+    if submission.website:
+        # Honeypot tripped: pretend success so the bot learns nothing, but store/send nothing
+        return SubmissionResponse(success=True, message="Thank you! Your demo request has been submitted successfully.")
+
     try:
         lead_data = {
             "name": submission.contactPerson,
@@ -597,8 +607,13 @@ async def submit_rfd(submission: RFDSubmission, background_tasks: BackgroundTask
 
 
 @router.post("/submit-contact")
-def submit_contact(submission: ContactSubmission, background_tasks: BackgroundTasks):
+@limiter.limit(FORM_LIMIT)
+def submit_contact(request: Request, submission: ContactSubmission, background_tasks: BackgroundTasks):
     """Submit a contact form"""
+    if submission.website:
+        # Honeypot tripped: pretend success so the bot learns nothing, but store/send nothing
+        return {"message": "Your message has been received. We will get back to you soon."}
+
     try:
         # Upsert provides concurrency-safe create/update under simultaneous submissions.
         lead_data = {
