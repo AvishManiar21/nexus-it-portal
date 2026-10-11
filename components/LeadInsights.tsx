@@ -3,12 +3,7 @@
 import { useState } from "react";
 import { BACKEND_API_URL } from "@/lib/backend";
 import type { LeadInsights as Insights } from "@/lib/api";
-
-const SCORE_STYLES: Record<Insights["score"]["label"], string> = {
-  hot: "bg-red-100 text-red-800",
-  warm: "bg-amber-100 text-amber-800",
-  cold: "bg-slate-100 text-slate-700",
-};
+import ScoreBadge from "@/components/admin/ScoreBadge";
 
 export default function LeadInsights({
   leadId,
@@ -86,9 +81,7 @@ export default function LeadInsights({
         {/* Rules-based score: always live, never decided by the model */}
         <div>
           <div className="flex items-center gap-3">
-            <span className={`rounded-full px-3 py-1 text-sm font-semibold uppercase tracking-wide ${SCORE_STYLES[score.label]}`}>
-              {score.label}
-            </span>
+            <ScoreBadge label={score.label} size="md" />
             <span className="text-sm text-body">{score.points} points</span>
           </div>
           {score.breakdown.length === 0 ? (

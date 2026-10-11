@@ -36,6 +36,12 @@ def _response(score: li.LeadScore, signals: li.LeadSignals, insight):
     }
 
 
+@router.get("/scores")
+def get_scores(db: Client = Depends(get_db), admin: dict = Depends(get_current_admin)):
+    """Rules-based score for every lead, hottest first (5 queries total)."""
+    return li.score_all(db)
+
+
 @router.get("/{lead_id}/insights")
 def get_insights(lead_id: int, db: Client = Depends(get_db), admin: dict = Depends(get_current_admin)):
     """Live rules-based score plus the cached AI insight (if one was generated)."""

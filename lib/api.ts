@@ -136,6 +136,15 @@ export interface LeadInsights {
   stale: boolean;
 }
 
+export interface LeadScoreSummary {
+  lead_id: number;
+  name: string;
+  company: string | null;
+  status: string;
+  label: "hot" | "warm" | "cold";
+  points: number;
+}
+
 export async function fetchLeadInsights(id: number): Promise<LeadInsights | null> {
   try {
     return await apiFetch<LeadInsights>(`/leads/${id}/insights`, "no-store");

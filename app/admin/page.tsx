@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowRight, RefreshCw } from "lucide-react"
 import StatusBadge from "@/components/admin/StatusBadge"
+import ScoreBadge from "@/components/admin/ScoreBadge"
+import type { LeadScoreSummary } from "@/lib/api"
 
 interface Lead {
   id: string
@@ -78,6 +80,18 @@ export default function AdminPage() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
   const [metricsLoading, setMetricsLoading] = useState(true)
   const [metricsError, setMetricsError] = useState("")
+  const [hottest, setHottest] = useState<LeadScoreSummary[] | null>(null)
+
+  // Top leads by the rules-based score (state set in promise callbacks)
+  useEffect(() => {
+    fetch(`${BACKEND_API_URL}/leads/scores`, { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((rows: LeadScoreSummary[]) => setHottest(rows.filter((r) => r.points > 0).slice(0, 5)))
+      .catch((err) => {
+        console.error("Error fetching lead scores:", err)
+        setHottest([])
+      })
+  }, [])
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -267,6 +281,46 @@ export default function AdminPage() {
               {metrics?.total_contact_messages ?? 0} contact messages in total
             </p>
           </div>
+        </Card>
+      </div>
+
+      {/* Hottest leads */}
+      <div className="mt-6">
+        <Card
+          title="Hottest leads"
+          action={<Link href="/admin/leads" className="text-sm font-semibold text-brand hover:text-brand-hover">All leads by score</Link>}
+        >
+          {hottest === null ? (
+            <div className="space-y-3 p-5">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-6 w-full" />)}</div>
+          ) : hottest.length === 0 ? (
+            <p className="p-5 text-sm text-muted">No engaged leads yet.</p>
+          ) : (
+            <ol className="divide-y divide-line">
+              {hottest.map((lead) => (
+                <li key={lead.lead_id} className="flex items-center justify-between gap-4 px-5 py-3.5 hover:bg-canvas">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <ScoreBadge label={lead.label} points={lead.points} />
+                    <div className="min-w-0">
+                      <Link href={`/admin/leads/${lead.lead_id}`} className="font-semibold text-ink hover:text-brand">
+                        {lead.name}
+                      </Link>
+                      <p className="truncate text-sm text-muted">{lead.company || "—"}</p>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-4">
+                    <StatusBadge status={lead.status} />
+                    <Link
+                      href={`/admin/leads/${lead.lead_id}`}
+                      aria-label={`View ${lead.name}`}
+                      className="inline-flex items-center gap-1 text-sm font-semibold text-brand hover:text-brand-hover"
+                    >
+                      View <ArrowRight className="h-4 w-4" aria-hidden />
+                    </Link>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
         </Card>
       </div>
 
