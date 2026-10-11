@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from app.routers import products, events, rfd, auth, leads, debug_db, analytics
+from app.routers import products, events, rfd, auth, leads, analytics
 from app.db_pg import close_pool
 import os
 from dotenv import load_dotenv
@@ -52,7 +52,6 @@ app.include_router(events.router)
 app.include_router(rfd.router)
 app.include_router(auth.router)
 app.include_router(leads.router)
-app.include_router(debug_db.router)
 app.include_router(analytics.router)
 
 
@@ -60,12 +59,8 @@ app.include_router(analytics.router)
 def root():
     return {"message": "Backend is running!"}
 
-@app.get("/env-test")
-def env_test():
-    from os import getenv
-    return {
-        "DATABASE_URL": getenv("DATABASE_URL"),
-        "SECRET_KEY": getenv("SECRET_KEY"),
-        "EMAIL_USER": getenv("EMAIL_USER"),
-        "FRONTEND_URL": getenv("FRONTEND_URL")
-    }
+
+@app.get("/health")
+def health():
+    """Liveness check. Intentionally returns no configuration details."""
+    return {"status": "ok"}
