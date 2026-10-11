@@ -1,25 +1,18 @@
+// Skeleton shown while a solution loads; mirrors the detail layout to avoid layout shift.
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-950 px-6 py-12">
-      <div className="max-w-3xl mx-auto">
-        <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-32 mb-6 animate-pulse" />
-
-        <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-24 mb-2 animate-pulse" />
-        <div className="h-9 bg-zinc-200 dark:bg-zinc-800 rounded w-full mb-4 animate-pulse" />
-        <div className="space-y-2 mb-8">
-          <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-full animate-pulse" />
-          <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-full animate-pulse" />
-          <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-3/4 animate-pulse" />
+    <div aria-busy="true" aria-label="Loading solution">
+      <section className="border-b border-line bg-canvas">
+        <div className="container-page grid gap-10 py-12 sm:py-14 lg:grid-cols-2">
+          <div className="space-y-4 pt-10">
+            <div className="h-4 w-24 animate-pulse rounded bg-slate-200" />
+            <div className="h-11 w-4/5 animate-pulse rounded bg-slate-200" />
+            <div className="h-5 w-full animate-pulse rounded bg-slate-200" />
+            <div className="h-5 w-5/6 animate-pulse rounded bg-slate-200" />
+          </div>
+          <div className="aspect-[16/10] animate-pulse rounded-lg bg-slate-200" />
         </div>
-
-        <div className="h-6 bg-zinc-200 dark:bg-zinc-800 rounded w-32 mb-3 animate-pulse" />
-        <div className="aspect-video bg-zinc-200 dark:bg-zinc-800 rounded-lg mb-8 animate-pulse" />
-
-        <div className="flex gap-4">
-          <div className="h-12 bg-zinc-200 dark:bg-zinc-800 rounded-lg w-40 animate-pulse" />
-          <div className="h-12 bg-zinc-200 dark:bg-zinc-800 rounded-lg w-48 animate-pulse" />
-        </div>
-      </div>
+      </section>
     </div>
   );
 }

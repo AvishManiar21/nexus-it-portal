@@ -1,20 +1,90 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Design system: "Trust & Authority", flat.
+ * One brand color (blue) used only for actions, links and key accents.
+ * Everything else is neutral slate. No gradients, glows or blur.
+ */
+@theme {
+  --color-brand: #0369a1;        /* sky-700: buttons, links, accents */
+  --color-brand-hover: #075985;  /* sky-800 */
+  --color-brand-soft: #f0f9ff;   /* sky-50: subtle tinted surfaces */
+
+  --color-ink: #0f172a;          /* headings, dark surfaces */
+  --color-body: #334155;         /* body text */
+  --color-muted: #64748b;        /* secondary text */
+  --color-line: #e2e8f0;         /* borders, dividers */
+  --color-canvas: #f8fafc;       /* alternate section background */
+
+  --font-heading: var(--font-lexend), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-source-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Base styles live in a layer so utilities (e.g. text-white on dark sections) can override them */
+@layer base {
+  body {
+    background: #ffffff;
+    color: var(--color-body);
+    font-family: var(--font-sans);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-heading);
+    color: var(--color-ink);
+    letter-spacing: -0.01em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .btn {
+    @apply inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-md px-5 py-2.5
+      text-base font-semibold transition-colors duration-150
+      disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  /* Variants: combine with .btn, e.g. class="btn btn-primary" */
+  .btn-primary {
+    @apply bg-brand text-white hover:bg-brand-hover;
+  }
+  .btn-secondary {
+    @apply border border-line bg-white text-ink hover:border-slate-300 hover:bg-canvas;
+  }
+  .btn-on-dark {
+    @apply bg-white text-ink hover:bg-slate-100;
+  }
+
+  .eyebrow {
+    @apply text-sm font-semibold uppercase tracking-wider text-brand;
+  }
+
+  .field-label {
+    @apply mb-1.5 block text-sm font-medium text-ink;
+  }
+  .field-input {
+    @apply block min-h-11 w-full rounded-md border border-slate-300 bg-white px-3.5 py-2.5 text-base text-ink
+      placeholder:text-slate-400 transition-colors duration-150
+      focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20
+      aria-[invalid=true]:border-red-600 aria-[invalid=true]:focus:ring-red-600/20;
+  }
+  .field-error {
+    @apply mt-1.5 text-sm text-red-700;
+  }
+  .required-mark {
+    @apply text-red-700;
   }
 }
