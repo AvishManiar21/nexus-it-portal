@@ -197,12 +197,9 @@ ALTER TABLE lead_status_audit DISABLE ROW LEVEL SECURITY;
 -- 4. SEED DATA
 -- ===================================================================
 
--- 4.1 Insert admin users (password is 'admin123' hashed with bcrypt)
--- You should change these passwords after initial setup
-INSERT INTO admin_users (email, password_hash, name) VALUES
-('admin@nexusit.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5yvC0z5p.QZGO', 'Admin User'),
-('sales@nexusit.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5yvC0z5p.QZGO', 'Sales Manager')
-ON CONFLICT (email) DO NOTHING;
+-- 4.1 Admin users are NOT seeded here (no default credentials).
+-- Create one after setup with:
+--   python scripts/create_admin.py --email you@example.com --name "Your Name"
 
 -- 4.2 Insert products
 INSERT INTO products (name, description, category, price, image_url, demo_video) VALUES
@@ -264,9 +261,6 @@ ON CONFLICT DO NOTHING;
 -- ===================================================================
 -- SETUP COMPLETE
 -- ===================================================================
--- Default admin credentials:
---   Email: admin@nexusit.com
---   Password: admin123
---
--- IMPORTANT: Change the admin password immediately after first login!
+-- Next step: create an admin account
+--   python scripts/create_admin.py --email you@example.com --name "Your Name"
 -- ===================================================================

@@ -171,9 +171,7 @@ npm run dev
 #### 6.3 Check Admin Dashboard
 
 1. Go to [http://localhost:3000/admin/login](http://localhost:3000/admin/login)
-2. Log in with:
-   - Email: `admin@nexusit.com`
-   - Password: `admin123`
+2. Log in with the admin account you created via `python scripts/create_admin.py --email you@example.com --name "Your Name"`
 3. Should see admin dashboard with:
    - Analytics metrics
    - Sample lead (John Smith)
@@ -241,12 +239,10 @@ npm run dev
 
 **Fix:**
 1. Verify you ran `database/complete_setup.sql` in Supabase
-2. Use exact credentials:
-   - Email: `admin@nexusit.com`
-   - Password: `admin123`
-3. Create admin manually:
+2. Make sure you created an admin account (none are seeded by default)
+3. Create one:
    ```bash
-   python scripts/create_admin.py
+   python scripts/create_admin.py --email you@example.com --name "Your Name"
    ```
 
 ### Port already in use
@@ -315,12 +311,9 @@ WHERE email = 'admin@nexusit.com';
 | Admin Dashboard | http://localhost:3000/admin |
 | API Docs | http://localhost:8000/docs |
 
-### Default Credentials
+### Admin Accounts
 
-| Account | Email | Password |
-|---------|-------|----------|
-| Admin | admin@nexusit.com | admin123 |
-| Sales | sales@nexusit.com | admin123 |
+No default credentials exist. Create accounts with `python scripts/create_admin.py --email you@example.com --name "Your Name"`.
 
 ### Commands
 

@@ -139,17 +139,13 @@ npm run dev
 
 ## Default Credentials
 
-After running `database/complete_setup.sql`, use these credentials to log in:
+No default accounts are seeded. After running `database/complete_setup.sql`, create an admin:
 
-**Admin Account:**
-- Email: `admin@nexusit.com`
-- Password: `admin123`
+```bash
+python scripts/create_admin.py --email you@example.com --name "Your Name"
+```
 
-**Sales Account:**
-- Email: `sales@nexusit.com`
-- Password: `admin123`
-
-**⚠️ Important:** Change these passwords in production!
+You will be prompted for a password (minimum 12 characters). For non-interactive setups, set `ADMIN_PASSWORD` instead.
 
 ## Project Structure
 
@@ -322,7 +318,7 @@ After making schema changes:
 
 **Solution:**
 1. Navigate to [http://localhost:3000/admin/login](http://localhost:3000/admin/login)
-2. Log in with `admin@nexusit.com` / `admin123`
+2. Log in with the account you created via `scripts/create_admin.py`
 3. Session expires after 8 hours - log in again
 
 ### Database connection errors

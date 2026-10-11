@@ -312,7 +312,7 @@ def validate_content(cls, v: str) -> str:
 - Updated `update_admin_email.py` comments to clarify this distinction
 - Instructed user to log in with the correct credentials:
   - Email: `avishmaniar24@gmail.com` (updated in Supabase)
-  - Password: `admin123` (default from setup script)
+  - Password: (redacted)
 
 **Files Modified:**
 - `update_admin_email.py` (line 42-43: improved comments)
