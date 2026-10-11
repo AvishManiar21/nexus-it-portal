@@ -181,5 +181,5 @@ async def get_dashboard(admin=Depends(get_current_admin)) -> Dict[str, Any]:
         print(f"[ANALYTICS] Query FAILED: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to compute analytics: {str(e)}",
+            detail="Failed to compute analytics",
         )
