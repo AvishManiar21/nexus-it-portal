@@ -43,6 +43,16 @@ jobs:
       - run: python -m compileall -q app scripts main.py
       - run: python -m pytest -q tests
 
+  docker:
+    name: Docker images build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build backend and frontend images
+        run: |
+          touch .env  # compose requires the env_file to exist; nothing is read at build time
+          docker compose build
+
   security:
     name: Security (dependency audit)
     runs-on: ubuntu-latest

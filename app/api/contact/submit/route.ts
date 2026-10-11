@@ -1,4 +1,4 @@
-import { BACKEND_API_URL } from "@/lib/backend";
+import { BACKEND_SERVER_URL } from "@/lib/backend";
 import { NextRequest, NextResponse } from "next/server"
 import { forwardedForHeaders } from "@/app/lib/forwardedFor"
 
@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    const response = await fetch(`${BACKEND_API_URL}/leads/submit-contact`, {
+    const response = await fetch(`${BACKEND_SERVER_URL}/leads/submit-contact`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

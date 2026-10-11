@@ -56,6 +56,19 @@ Before you begin, ensure you have the following installed:
 
 ## Quick Start
 
+### With Docker (one command)
+
+Create the database schema first (step 3 below), then:
+
+```bash
+cp .env.example .env    # fill in SUPABASE_*, DATABASE_URL and SESSION_SECRET
+docker compose up --build
+```
+
+The site is served on http://localhost:3000 and the API on http://localhost:8000. To also run the AI lead insights locally, add `--profile ai`: this starts Ollama and pulls `llama3.2` (about 2 GB) on first run. If you already run Ollama on your machine, set `DOCKER_AI_BASE_URL=http://host.docker.internal:11434/v1` in `.env` instead.
+
+### Without Docker
+
 ### 1. Clone the Repository
 
 ```bash
