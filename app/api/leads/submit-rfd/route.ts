@@ -1,13 +1,13 @@
+import { BACKEND_API_URL } from "@/lib/backend";
 import { NextRequest, NextResponse } from 'next/server';
 import { forwardedForHeaders } from '@/app/lib/forwardedFor';
 
-const PYTHON_API_URL = process.env.PYTHON_API_URL || 'http://localhost:8000';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    const response = await fetch(`${PYTHON_API_URL}/leads/submit-rfd`, {
+    const response = await fetch(`${BACKEND_API_URL}/leads/submit-rfd`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

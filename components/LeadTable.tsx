@@ -1,5 +1,6 @@
 "use client";
 
+import { BACKEND_API_URL } from "@/lib/backend";
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
@@ -14,7 +15,7 @@ interface Lead {
 
 type SortColumn = "name" | "email" | "company" | "status" | "created_at";
 
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+const API_URL = BACKEND_API_URL;
 
 const STATUS_COLORS: Record<string, string> = {
   new: "bg-blue-100 text-blue-800",

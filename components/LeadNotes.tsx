@@ -1,5 +1,6 @@
 "use client";
 
+import { BACKEND_API_URL } from "@/lib/backend";
 import { useState, FormEvent } from "react";
 
 interface Note {
@@ -43,7 +44,7 @@ export default function LeadNotes({ leadId, initialNotes }: LeadNotesProps) {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/leads/${leadId}/notes`,
+        `${BACKEND_API_URL}/leads/${leadId}/notes`,
         {
           method: "POST",
           headers: {

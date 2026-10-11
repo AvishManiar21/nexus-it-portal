@@ -1,5 +1,6 @@
 "use client";
 
+import { BACKEND_API_URL } from "@/lib/backend";
 import { useState, ChangeEvent, useRef } from "react";
 import { useRouter } from "next/navigation";
 
@@ -40,7 +41,7 @@ export default function LeadStatusSelector({
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/leads/${leadId}/status`,
+        `${BACKEND_API_URL}/leads/${leadId}/status`,
         {
           method: "PATCH",
           headers: {
