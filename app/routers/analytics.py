@@ -1,3 +1,4 @@
+import logging
 """
 Analytics dashboard endpoint covering US-22 (lead totals) and US-23
 (engagement / completion-rate analytics).
@@ -15,6 +16,8 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.db_pg import get_pool
 from app.dependencies.auth import get_current_admin
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
@@ -177,8 +180,8 @@ async def get_dashboard(admin=Depends(get_current_admin)) -> Dict[str, Any]:
             "conversion_rate": float(conversion_rate or 0.0),
             "leads_by_source": leads_by_source,
         }
-    except asyncpg.PostgresError as e:
-        print(f"[ANALYTICS] Query FAILED: {e}")
+    except asyncpg.PostgresError:
+        logger.exception("Analytics query failed")
         raise HTTPException(
             status_code=500,
             detail="Failed to compute analytics",

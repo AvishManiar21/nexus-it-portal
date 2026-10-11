@@ -1,9 +1,12 @@
+import logging
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 import asyncpg
 
 from app.db_pg import get_pool
 from app.rate_limit import limiter, EVENT_LIMIT
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -16,7 +19,7 @@ class ProductViewEvent(BaseModel):
 @router.post("/product-view")
 @limiter.limit(EVENT_LIMIT)
 async def record_product_view(request: Request, event: ProductViewEvent):
-    print(f"[VIEW] Received: session={event.session_id}, product={event.product_id}")
+    logger.debug("Product view received: session=%s product=%s", event.session_id, event.product_id)
     try:
         pool = await get_pool()
         async with pool.acquire() as conn:
@@ -30,10 +33,10 @@ async def record_product_view(request: Request, event: ProductViewEvent):
                 event.product_id,
             )
         new_id = row["id"]
-        print(f"[VIEW] Inserted successfully: id={new_id}")
+        logger.debug("Product view recorded: id=%s", new_id)
         return {"status": "ok", "id": new_id}
-    except asyncpg.PostgresError as e:
-        print(f"[VIEW] Insert FAILED: {e}")
+    except asyncpg.PostgresError:
+        logger.exception("Failed to record product view")
         raise HTTPException(status_code=500, detail="Failed to record view")
 
 
@@ -49,9 +52,9 @@ class VideoEngagementEvent(BaseModel):
 async def record_video_engagement(request: Request, event: VideoEngagementEvent):
     if event.event_type not in ("start", "complete"):
         raise HTTPException(status_code=400, detail="Invalid event_type")
-    print(
-        f"[VIDEO] Received: session={event.session_id}, product={event.product_id}, "
-        f"type={event.event_type}, duration={event.watch_duration_seconds}"
+    logger.debug(
+        "Video event received: session=%s product=%s type=%s duration=%s",
+        event.session_id, event.product_id, event.event_type, event.watch_duration_seconds,
     )
     try:
         pool = await get_pool()
@@ -69,8 +72,8 @@ async def record_video_engagement(request: Request, event: VideoEngagementEvent)
                 event.watch_duration_seconds,
             )
         new_id = row["id"]
-        print(f"[VIDEO] Inserted successfully: id={new_id}")
+        logger.debug("Video event recorded: id=%s", new_id)
         return {"status": "ok", "id": new_id}
-    except asyncpg.PostgresError as e:
-        print(f"[VIDEO] Insert FAILED: {e}")
+    except asyncpg.PostgresError:
+        logger.exception("Failed to record video event")
         raise HTTPException(status_code=500, detail="Failed to record event")
