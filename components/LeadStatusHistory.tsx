@@ -1,5 +1,7 @@
 "use client";
 
+import StatusBadge from "@/components/admin/StatusBadge";
+
 interface StatusChange {
   id: number;
   old_status: string;
@@ -27,37 +29,33 @@ export default function LeadStatusHistory({
 }: LeadStatusHistoryProps) {
   if (statusHistory.length === 0) {
     return (
-      <div className="bg-white dark:bg-zinc-900 rounded-lg shadow">
-        <div className="p-4 border-b border-gray-200 dark:border-zinc-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+      <div className="bg-white rounded-lg border border-line">
+        <div className="p-4 border-b border-line">
+          <h2 className="text-lg font-semibold text-ink">
             Status Change History
           </h2>
         </div>
-        <div className="p-4 text-sm text-gray-500">No status changes yet</div>
+        <div className="p-4 text-sm text-muted">No status changes yet</div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-lg shadow">
-      <div className="p-4 border-b border-gray-200 dark:border-zinc-700">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+    <div className="bg-white rounded-lg border border-line">
+      <div className="p-4 border-b border-line">
+        <h2 className="text-lg font-semibold text-ink">
           Status Change History
         </h2>
       </div>
-      <div className="divide-y divide-gray-100 dark:divide-zinc-800">
+      <div className="divide-y divide-line">
         {statusHistory.map((change) => (
           <div key={change.id} className="p-4">
             <div className="flex items-center gap-2 mb-1">
-              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize bg-red-100 text-red-800 line-through">
-                {change.old_status}
-              </span>
-              <span className="text-gray-400">→</span>
-              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize bg-green-100 text-green-800">
-                {change.new_status}
-              </span>
+              <StatusBadge status={change.old_status} />
+              <span className="text-muted" aria-label="changed to">→</span>
+              <StatusBadge status={change.new_status} />
             </div>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-muted mt-1">
               {change.changed_by} &middot; {formatDateTime(change.created_at)}
             </p>
           </div>
