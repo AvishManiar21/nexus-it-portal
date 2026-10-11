@@ -113,55 +113,33 @@ python scripts/test_rfd_submission.py
 ## Admin Management Scripts
 
 ### update_admin_email.py
-Updates admin user email address in the database.
+Changes an admin user's email address in the `admin_users` table.
 
 **Usage:**
 ```bash
-python scripts/update_admin_email.py
+python scripts/update_admin_email.py --old admin@nexusit.com --new you@example.com
 ```
 
 **What it does:**
-- Updates admin user email in `admin_users` table
-- This email receives alert emails (RFD submissions, contact forms)
-- Does NOT change login credentials (managed separately in Supabase Auth)
-
-**When to use:**
-- Changing which email receives admin alerts
-- Setting up notifications for a different admin
+- Updates the matching row in `admin_users`; if no admin has the `--old` address, nothing is changed
+- That address is used both to **log in** and to receive RFD alert emails
 
 **Requirements:**
 - SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in `.env`
 
-**Important:** This updates the email for receiving alerts only. Login authentication is managed separately through Supabase Auth.
+**Important:** Changing the email also changes the address you log in with.
 
 ---
 
-## Debug & Testing Scripts
-
-These scripts were used during development for debugging and testing specific features. They're kept for reference but not needed for normal operation.
+## Diagnostic Scripts
 
 ### check_env.py
 Quick script to verify environment variables are loaded correctly.
 
-### check_video_direct.py / check_video_events.py
-Debug scripts for video engagement tracking issues.
-
-### cleanup_test_data.py
-Removes test data from the database.
-
-### debug_query.py
-General-purpose database query debugging script.
-
-### delete_by_id.py
-Utility to delete specific records by ID during testing.
-
 ### test_connection.py
 Tests basic database connectivity.
 
-### test_direct_insert.py / test_insert.py / test_unique_insert.py
-Various database insert testing scripts used during development.
-
-**Note:** These scripts are primarily for development/debugging. For production use, focus on the main scripts listed above (create_admin.py, verify_database.py, test_email.py, etc.).
+Automated tests live in `tests/` and run with `python -m pytest tests` (and in CI on every PR).
 
 ---
 
@@ -170,7 +148,7 @@ Various database insert testing scripts used during development.
 ### "Module not found" errors
 Make sure you're running scripts from the project root:
 ```bash
-cd /path/to/SOFT210-SP26-TeamB
+cd /path/to/nexus-it-portal
 python scripts/script_name.py
 ```
 

@@ -1,76 +1,54 @@
 #!/usr/bin/env python3
 """
 Update Admin Email Script
-Updates the admin user's email to receive alert emails
+Changes an admin user's email address in admin_users.
+
+That address is used both to log in (/auth/login looks admins up by it)
+and to receive RFD alert emails.
+
+Usage:
+    python scripts/update_admin_email.py --old admin@nexusit.com --new you@example.com
 """
 
+import argparse
 import os
-from supabase import create_client
+import sys
+
 from dotenv import load_dotenv
+from supabase import create_client
 
 load_dotenv()
 
+
 def main():
+    parser = argparse.ArgumentParser(description="Change an admin user's email address")
+    parser.add_argument("--old", required=True, help="Current admin email")
+    parser.add_argument("--new", required=True, help="New admin email")
+    args = parser.parse_args()
+
     supabase_url = os.getenv("SUPABASE_URL")
     supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-
     if not supabase_url or not supabase_key:
         print("Error: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set")
         return 1
 
     supabase = create_client(supabase_url, supabase_key)
 
-    old_email = "admin@nexusit.com"
-    new_email = "avishmaniar24@gmail.com"
-
-    print("=" * 60)
-    print("Updating Admin Email for Alerts")
-    print("=" * 60)
-    print(f"Old email: {old_email}")
-    print(f"New email: {new_email}")
-    print("=" * 60)
-
     try:
-        # Update the admin user's email
-        result = supabase.table("admin_users").update({
-            "email": new_email
-        }).eq("email", old_email).execute()
-
-        if result.data:
-            print(f"\n[SUCCESS] Updated admin email to {new_email}")
-            print(f"\nAdmin alerts will now be sent to: {new_email}")
-            print(f"\nNote: This updates the email in admin_users table for receiving alerts.")
-            print("Login authentication is managed separately in Supabase Auth.")
-        else:
-            print(f"\n[WARNING] No admin found with email {old_email}")
-            print("\nTrying to check existing admins...")
-
-            # List all admins
-            admins = supabase.table("admin_users").select("id, email, name").execute()
-            if admins.data:
-                print(f"\nFound {len(admins.data)} admin user(s):")
-                for admin in admins.data:
-                    print(f"  - {admin['name']} ({admin['email']})")
-
-                # Try to update the first admin
-                first_admin_email = admins.data[0]['email']
-                print(f"\nUpdating first admin ({first_admin_email}) to {new_email}...")
-                update_result = supabase.table("admin_users").update({
-                    "email": new_email
-                }).eq("email", first_admin_email).execute()
-
-                if update_result.data:
-                    print(f"[SUCCESS] Updated {first_admin_email} to {new_email}")
-                else:
-                    print(f"[FAILED] Could not update admin email")
-            else:
-                print("\nNo admin users found in database.")
-
+        result = supabase.table("admin_users").update({"email": args.new}).eq("email", args.old).execute()
     except Exception as e:
-        print(f"\n[ERROR] {str(e)}")
+        print(f"[ERROR] {e}")
         return 1
 
+    if not result.data:
+        # Deliberately no fallback: never change an account the caller didn't name
+        print(f"[NOT FOUND] No admin with email {args.old}; nothing changed.")
+        return 1
+
+    print(f"[SUCCESS] Updated {args.old} -> {args.new}")
+    print("Use the new address to log in; RFD alerts will also go there.")
     return 0
 
+
 if __name__ == "__main__":
-    exit(main())
+    sys.exit(main())
