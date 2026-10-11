@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState, ChangeEvent, FormEvent } from "react"
 import {
   FRIENDLY_SUBMISSION_ERROR_MESSAGE,
@@ -128,27 +129,44 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Contact Us</h1>
-          <p className="text-gray-600 mb-8">
-            Have a question or feedback? We&apos;d love to hear from you. Send us a message and we&apos;ll respond as soon as possible.
-          </p>
+    <>
+      <section className="border-b border-line bg-canvas">
+        <div className="container-page py-14 sm:py-16">
+          <h1 className="max-w-3xl text-4xl font-semibold sm:text-5xl">Contact us</h1>
+          <p className="mt-4 max-w-2xl text-lg leading-relaxed">Questions about a solution, pricing or an existing deployment? Send us a message and we will get back to you.</p>
+        </div>
+      </section>
+      <section className="py-14 sm:py-16">
+        <div className="container-page grid gap-12 lg:grid-cols-[1fr_2fr]">
+        <aside className="space-y-8">
+          <div>
+            <h2 className="text-lg font-semibold">How we respond</h2>
+            <ol className="mt-4 space-y-4">
+              <li className="flex gap-3"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line font-heading text-sm font-semibold text-ink">1</span><span className="pt-0.5">Every message is reviewed within one business day.</span></li>
+              <li className="flex gap-3"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line font-heading text-sm font-semibold text-ink">2</span><span className="pt-0.5">You hear back from someone who can answer, not a ticket bot.</span></li>
+              <li className="flex gap-3"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line font-heading text-sm font-semibold text-ink">3</span><span className="pt-0.5">We send a confirmation email as soon as you submit.</span></li>
+            </ol>
+          </div>
+          <div className="rounded-lg border border-line p-5">
+            <p className="font-semibold text-ink">Want to see a solution in action?</p>
+            <p className="mt-1">Book a tailored walkthrough. <Link href="/rfd" className="font-semibold text-brand hover:text-brand-hover">Request a demo</Link></p>
+          </div>
+        </aside>
+        <div className="rounded-lg border border-line bg-white p-6 sm:p-8">
 
           {successMessage && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-green-800 font-medium">{successMessage}</p>
+            <div role="status" className="mb-6 rounded-md border border-green-300 bg-green-50 p-4">
+              <p className="font-medium text-green-900">{successMessage}</p>
             </div>
           )}
 
           {errorMessage && (
-            <div role="alert" className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-800 font-medium">{errorMessage}</p>
+            <div role="alert" className="mb-6 rounded-md border border-red-300 bg-red-50 p-4">
+              <p className="font-medium text-red-900">{errorMessage}</p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} noValidate className="space-y-5">
             {/* Honeypot: visually hidden, so only bots fill it in */}
             <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
               <label htmlFor="website">Website</label>
@@ -156,8 +174,8 @@ export default function ContactPage() {
             </div>
             {/* Name */}
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                Name <span className="text-red-500">*</span>
+              <label htmlFor="name" className="field-label">
+                Name <span className="required-mark" aria-hidden="true">*</span>
               </label>
               <input
                 type="text"
@@ -167,20 +185,18 @@ export default function ContactPage() {
                 onChange={handleInputChange}
                 aria-invalid={Boolean(errors.name)}
                 aria-describedby={errors.name ? "name-error" : undefined}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                  errors.name ? "border-red-500 focus:ring-red-500" : "border-gray-300"
-                }`}
+                className="field-input"
                 placeholder="Enter your full name"
               />
               {errors.name && (
-                <p id="name-error" className="text-red-500 text-sm mt-1">{errors.name}</p>
+                <p id="name-error" className="field-error">{errors.name}</p>
               )}
             </div>
 
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email <span className="text-red-500">*</span>
+              <label htmlFor="email" className="field-label">
+                Email <span className="required-mark" aria-hidden="true">*</span>
               </label>
               <input
                 type="email"
@@ -190,20 +206,18 @@ export default function ContactPage() {
                 onChange={handleInputChange}
                 aria-invalid={Boolean(errors.email)}
                 aria-describedby={errors.email ? "email-error" : undefined}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                  errors.email ? "border-red-500 focus:ring-red-500" : "border-gray-300"
-                }`}
+                className="field-input"
                 placeholder="Enter your email address"
               />
               {errors.email && (
-                <p id="email-error" className="text-red-500 text-sm mt-1">{errors.email}</p>
+                <p id="email-error" className="field-error">{errors.email}</p>
               )}
             </div>
 
             {/* Subject */}
             <div>
-              <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-1">
-                Company Name <span className="text-red-500">*</span>
+              <label htmlFor="company" className="field-label">
+                Company Name <span className="required-mark" aria-hidden="true">*</span>
               </label>
               <input
                 type="text"
@@ -213,19 +227,17 @@ export default function ContactPage() {
                 onChange={handleInputChange}
                 aria-invalid={Boolean(errors.company)}
                 aria-describedby={errors.company ? "company-error" : undefined}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                  errors.company ? "border-red-500 focus:ring-red-500" : "border-gray-300"
-                }`}
+                className="field-input"
                 placeholder="Enter your company name"
               />
               {errors.company && (
-                <p id="company-error" className="text-red-500 text-sm mt-1">{errors.company}</p>
+                <p id="company-error" className="field-error">{errors.company}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                Phone <span className="text-red-500">*</span>
+              <label htmlFor="phone" className="field-label">
+                Phone <span className="required-mark" aria-hidden="true">*</span>
               </label>
               <input
                 type="text"
@@ -235,19 +247,17 @@ export default function ContactPage() {
                 onChange={handleInputChange}
                 aria-invalid={Boolean(errors.phone)}
                 aria-describedby={errors.phone ? "phone-error" : undefined}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                  errors.phone ? "border-red-500 focus:ring-red-500" : "border-gray-300"
-                }`}
+                className="field-input"
                 placeholder="Enter your phone number"
               />
               {errors.phone && (
-                <p id="phone-error" className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                <p id="phone-error" className="field-error">{errors.phone}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="budget" className="block text-sm font-medium text-gray-700 mb-1">
-                Budget Range <span className="text-red-500">*</span>
+              <label htmlFor="budget" className="field-label">
+                Budget Range <span className="required-mark" aria-hidden="true">*</span>
               </label>
               <select
                 id="budget"
@@ -256,9 +266,7 @@ export default function ContactPage() {
                 onChange={handleInputChange}
                 aria-invalid={Boolean(errors.budget)}
                 aria-describedby={errors.budget ? "budget-error" : undefined}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                  errors.budget ? "border-red-500 focus:ring-red-500" : "border-gray-300"
-                }`}
+                className="field-input"
               >
                 <option value="">Select your budget range</option>
                 {BUDGET_OPTIONS.map((budget) => (
@@ -268,13 +276,13 @@ export default function ContactPage() {
                 ))}
               </select>
               {errors.budget && (
-                <p id="budget-error" className="text-red-500 text-sm mt-1">{errors.budget}</p>
+                <p id="budget-error" className="field-error">{errors.budget}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
-                Subject <span className="text-red-500">*</span>
+              <label htmlFor="subject" className="field-label">
+                Subject <span className="required-mark" aria-hidden="true">*</span>
               </label>
               <input
                 type="text"
@@ -284,20 +292,18 @@ export default function ContactPage() {
                 onChange={handleInputChange}
                 aria-invalid={Boolean(errors.subject)}
                 aria-describedby={errors.subject ? "subject-error" : undefined}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                  errors.subject ? "border-red-500 focus:ring-red-500" : "border-gray-300"
-                }`}
+                className="field-input"
                 placeholder="What is this about?"
               />
               {errors.subject && (
-                <p id="subject-error" className="text-red-500 text-sm mt-1">{errors.subject}</p>
+                <p id="subject-error" className="field-error">{errors.subject}</p>
               )}
             </div>
 
             {/* Message */}
             <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
-                Message <span className="text-red-500">*</span>
+              <label htmlFor="message" className="field-label">
+                Message <span className="required-mark" aria-hidden="true">*</span>
               </label>
               <textarea
                 id="message"
@@ -307,26 +313,20 @@ export default function ContactPage() {
                 rows={5}
                 aria-invalid={Boolean(errors.message)}
                 aria-describedby={errors.message ? "message-error" : undefined}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition resize-none ${
-                  errors.message ? "border-red-500 focus:ring-red-500" : "border-gray-300"
-                }`}
+                className="field-input"
                 placeholder="Enter your message here..."
               />
               {errors.message && (
-                <p id="message-error" className="text-red-500 text-sm mt-1">{errors.message}</p>
+                <p id="message-error" className="field-error">{errors.message}</p>
               )}
             </div>
 
             {/* Submit Button */}
-            <div className="flex gap-4">
+            <div className="flex gap-3 pt-2">
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`flex-1 font-medium py-2 px-6 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                  isLoading
-                    ? "bg-blue-400 text-white cursor-not-allowed opacity-75"
-                    : "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500"
-                }`}
+                className="btn btn-primary flex-1"
               >
                 {isLoading ? "Sending..." : "Send Message"}
               </button>
@@ -334,18 +334,15 @@ export default function ContactPage() {
                 type="button"
                 onClick={handleClear}
                 disabled={isLoading}
-                className={`font-medium py-2 px-6 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                  isLoading
-                    ? "bg-gray-300 text-gray-800 cursor-not-allowed opacity-75"
-                    : "bg-gray-300 text-gray-800 hover:bg-gray-400 focus:ring-gray-500"
-                }`}
+                className="btn btn-secondary"
               >
                 Clear
               </button>
             </div>
           </form>
         </div>
-      </div>
-    </div>
+        </div>
+      </section>
+    </>
   )
 }

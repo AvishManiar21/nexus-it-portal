@@ -1,78 +1,80 @@
-import { fetchProducts } from "../../lib/api";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
+import { ArrowRight } from "lucide-react";
+import { fetchProducts } from "@/lib/api";
+import { formatPrice } from "@/lib/format";
+import PageHeader from "@/components/site/PageHeader";
+import CtaBand from "@/components/site/CtaBand";
 
 export const metadata: Metadata = {
-  title: "Product Catalog | Nexus-IT Solutions",
-  description: "Browse our enterprise IT solutions including Cloud Infrastructure Suite, Cybersecurity Shield, and AI Analytics Dashboard.",
+  title: "Solutions",
+  description: "Cloud infrastructure, analytics and cybersecurity solutions from Nexus IT, deployed and supported by one team.",
 };
 
 export default async function ProductsPage() {
   const products = await fetchProducts();
 
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-950 px-6 py-12">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold text-zinc-800 dark:text-white mb-2">
-          Our Services
-        </h1>
-        <p className="text-zinc-500 dark:text-zinc-400 mb-10">
-          Explore our enterprise solutions designed for modern businesses.
-        </p>
+    <>
+      <PageHeader
+        eyebrow="Solutions"
+        title="Solutions for infrastructure, data and security"
+        intro="Each solution is deployed, maintained and supported by the same team. Start with one and add more as you grow."
+      />
 
-        {products.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-zinc-400 mb-4">
-              No products available at the moment.
-            </p>
-            <p className="text-zinc-500 text-sm">
-              Please check back later or contact our support team.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product) => (
-              <Link
-                key={product.id}
-                href={`/products/${product.id}`}
-                className="block border border-zinc-200 dark:border-zinc-700 rounded-xl hover:shadow-md transition-shadow overflow-hidden"
-              >
-                {product.image_url && (
-                  <div className="relative w-full h-48 bg-zinc-100 dark:bg-zinc-800">
-                    <Image
-                      src={product.image_url}
-                      alt={product.name}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
-                  </div>
-                )}
-                <div className="p-6">
-                  <span className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">
-                    {product.category}
-                  </span>
-                  <h2 className="text-lg font-semibold text-zinc-800 dark:text-white mt-2 mb-2">
-                    {product.name}
-                  </h2>
-                  <p className="text-zinc-500 dark:text-zinc-400 text-sm line-clamp-3">
-                    {product.description}
-                  </p>
-                  {product.price !== null && (
-                    <p className="text-zinc-800 dark:text-white font-semibold mt-3">
-                      ${product.price.toLocaleString()}
-                    </p>
+      <section className="py-16 sm:py-20">
+        <div className="container-page">
+          {products.length === 0 ? (
+            <div className="rounded-lg border border-line px-6 py-16 text-center">
+              <h2 className="text-xl font-semibold">Solutions are temporarily unavailable</h2>
+              <p className="mt-2">Please try again shortly, or contact us and we will send you the details.</p>
+              <Link href="/contact" className="btn btn-primary mt-6">Contact us</Link>
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {products.map((product) => (
+                <Link
+                  key={product.id}
+                  href={`/products/${product.id}`}
+                  className="group flex flex-col overflow-hidden rounded-lg border border-line bg-white transition-colors duration-150 hover:border-slate-300"
+                >
+                  {product.image_url && (
+                    <div className="relative aspect-[16/10] bg-canvas">
+                      <Image
+                        src={product.image_url}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      />
+                    </div>
                   )}
-                  <span className="inline-block mt-4 text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline">
-                    Learn more →
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+                  <div className="flex flex-1 flex-col p-6">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted">{product.category}</p>
+                    <h2 className="mt-2 text-xl font-semibold">{product.name}</h2>
+                    <p className="mt-3 line-clamp-3 leading-relaxed">{product.description}</p>
+                    <div className="mt-auto flex items-center justify-between pt-6">
+                      {product.price !== null ? (
+                        <span className="text-sm text-muted">
+                          from <span className="font-semibold tabular-nums text-ink">{formatPrice(product.price)}</span>
+                        </span>
+                      ) : (
+                        <span />
+                      )}
+                      <span className="inline-flex items-center gap-1.5 font-semibold text-brand">
+                        Details <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <CtaBand />
+    </>
   );
 }

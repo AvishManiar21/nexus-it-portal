@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState, ChangeEvent, FormEvent } from "react"
 import {
   FRIENDLY_SUBMISSION_ERROR_MESSAGE,
@@ -153,27 +154,44 @@ export default function RfdPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Request a Demo</h1>
-          <p className="text-gray-600 mb-8">
-            Fill out the form below to schedule a demo with our team.
-          </p>
+    <>
+      <section className="border-b border-line bg-canvas">
+        <div className="container-page py-14 sm:py-16">
+          <h1 className="max-w-3xl text-4xl font-semibold sm:text-5xl">Request a demo</h1>
+          <p className="mt-4 max-w-2xl text-lg leading-relaxed">Tell us about your team and what you are looking for. We will tailor the walkthrough to your setup.</p>
+        </div>
+      </section>
+      <section className="py-14 sm:py-16">
+        <div className="container-page grid gap-12 lg:grid-cols-[1fr_2fr]">
+        <aside className="space-y-8">
+          <div>
+            <h2 className="text-lg font-semibold">What happens next</h2>
+            <ol className="mt-4 space-y-4">
+              <li className="flex gap-3"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line font-heading text-sm font-semibold text-ink">1</span><span className="pt-0.5">We review your request within one business day.</span></li>
+              <li className="flex gap-3"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line font-heading text-sm font-semibold text-ink">2</span><span className="pt-0.5">We schedule a walkthrough around your use case.</span></li>
+              <li className="flex gap-3"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line font-heading text-sm font-semibold text-ink">3</span><span className="pt-0.5">You receive a written proposal and rollout plan.</span></li>
+            </ol>
+          </div>
+          <div className="rounded-lg border border-line p-5">
+            <p className="font-semibold text-ink">Just have a question?</p>
+            <p className="mt-1">Send us a message instead. <Link href="/contact" className="font-semibold text-brand hover:text-brand-hover">Contact us</Link></p>
+          </div>
+        </aside>
+        <div className="rounded-lg border border-line bg-white p-6 sm:p-8">
 
           {isSubmitted && successMessage && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-green-800 font-medium">{successMessage}</p>
+            <div role="status" className="mb-6 rounded-md border border-green-300 bg-green-50 p-4">
+              <p className="font-medium text-green-900">{successMessage}</p>
             </div>
           )}
 
           {errorMessage && (
-            <div role="alert" className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-800 font-medium">{errorMessage}</p>
+            <div role="alert" className="mb-6 rounded-md border border-red-300 bg-red-50 p-4">
+              <p className="font-medium text-red-900">{errorMessage}</p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} noValidate className="space-y-5">
             {/* Honeypot: visually hidden, so only bots fill it in */}
             <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
               <label htmlFor="website">Website</label>
@@ -181,8 +199,8 @@ export default function RfdPage() {
             </div>
             {/* Company Name */}
             <div>
-              <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-1">
-                Company Name <span className="text-red-500">*</span>
+              <label htmlFor="company" className="field-label">
+                Company Name <span className="required-mark" aria-hidden="true">*</span>
               </label>
               <input
                 type="text"
@@ -192,20 +210,18 @@ export default function RfdPage() {
                 onChange={handleInputChange}
                 aria-invalid={Boolean(errors.company)}
                 aria-describedby={errors.company ? "company-error" : undefined}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                  errors.company ? "border-red-500 focus:ring-red-500" : "border-gray-300"
-                }`}
+                className="field-input"
                 placeholder="Enter your company name"
               />
               {errors.company && (
-                <p id="company-error" className="text-red-500 text-sm mt-1">{errors.company}</p>
+                <p id="company-error" className="field-error">{errors.company}</p>
               )}
             </div>
 
             {/* Contact Person */}
             <div>
-              <label htmlFor="contactPerson" className="block text-sm font-medium text-gray-700 mb-1">
-                Contact Person <span className="text-red-500">*</span>
+              <label htmlFor="contactPerson" className="field-label">
+                Contact Person <span className="required-mark" aria-hidden="true">*</span>
               </label>
               <input
                 type="text"
@@ -215,20 +231,18 @@ export default function RfdPage() {
                 onChange={handleInputChange}
                 aria-invalid={Boolean(errors.contactPerson)}
                 aria-describedby={errors.contactPerson ? "contactPerson-error" : undefined}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                  errors.contactPerson ? "border-red-500 focus:ring-red-500" : "border-gray-300"
-                }`}
+                className="field-input"
                 placeholder="Enter your full name"
               />
               {errors.contactPerson && (
-                <p id="contactPerson-error" className="text-red-500 text-sm mt-1">{errors.contactPerson}</p>
+                <p id="contactPerson-error" className="field-error">{errors.contactPerson}</p>
               )}
             </div>
 
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email <span className="text-red-500">*</span>
+              <label htmlFor="email" className="field-label">
+                Email <span className="required-mark" aria-hidden="true">*</span>
               </label>
               <input
                 type="email"
@@ -238,20 +252,18 @@ export default function RfdPage() {
                 onChange={handleInputChange}
                 aria-invalid={Boolean(errors.email)}
                 aria-describedby={errors.email ? "email-error" : undefined}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                  errors.email ? "border-red-500 focus:ring-red-500" : "border-gray-300"
-                }`}
+                className="field-input"
                 placeholder="Enter your email address"
               />
               {errors.email && (
-                <p id="email-error" className="text-red-500 text-sm mt-1">{errors.email}</p>
+                <p id="email-error" className="field-error">{errors.email}</p>
               )}
             </div>
 
             {/* Phone */}
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                Phone <span className="text-red-500">*</span>
+              <label htmlFor="phone" className="field-label">
+                Phone <span className="required-mark" aria-hidden="true">*</span>
               </label>
               <input
                 type="tel"
@@ -261,20 +273,18 @@ export default function RfdPage() {
                 onChange={handleInputChange}
                 aria-invalid={Boolean(errors.phone)}
                 aria-describedby={errors.phone ? "phone-error" : undefined}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                  errors.phone ? "border-red-500 focus:ring-red-500" : "border-gray-300"
-                }`}
+                className="field-input"
                 placeholder="Enter your phone number"
               />
               {errors.phone && (
-                <p id="phone-error" className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                <p id="phone-error" className="field-error">{errors.phone}</p>
               )}
             </div>
 
             {/* Budget Range */}
             <div>
-              <label htmlFor="budget" className="block text-sm font-medium text-gray-700 mb-1">
-                Budget Range <span className="text-red-500">*</span>
+              <label htmlFor="budget" className="field-label">
+                Budget Range <span className="required-mark" aria-hidden="true">*</span>
               </label>
               <select
                 id="budget"
@@ -283,9 +293,7 @@ export default function RfdPage() {
                 onChange={handleInputChange}
                 aria-invalid={Boolean(errors.budget)}
                 aria-describedby={errors.budget ? "budget-error" : undefined}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                  errors.budget ? "border-red-500 focus:ring-red-500" : "border-gray-300"
-                }`}
+                className="field-input"
               >
                 <option value="">Select a budget range</option>
                 <option value="Under $10,000">Under $10,000</option>
@@ -294,43 +302,39 @@ export default function RfdPage() {
                 <option value="Over $100,000">Over $100,000</option>
               </select>
               {errors.budget && (
-                <p id="budget-error" className="text-red-500 text-sm mt-1">{errors.budget}</p>
+                <p id="budget-error" className="field-error">{errors.budget}</p>
               )}
             </div>
 
             {/* Products of Interest */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Products of Interest <span className="text-red-500">*</span>
-              </label>
+            <fieldset>
+              <legend className="field-label">Products of interest <span className="required-mark" aria-hidden="true">*</span></legend>
               <div
                 aria-invalid={Boolean(errors.products)}
                 aria-describedby={errors.products ? "products-error" : undefined}
-                className={`space-y-2 rounded-lg border p-3 ${
-                  errors.products ? "border-red-500" : "border-transparent"
-                }`}
+                className={`space-y-1 rounded-md border p-2 ${errors.products ? "border-red-600" : "border-line"}`}
               >
                 {PRODUCT_OPTIONS.map(product => (
-                  <label key={product} className="flex items-center">
+                  <label key={product} className="flex min-h-11 cursor-pointer items-center rounded px-2 hover:bg-canvas">
                     <input
                       type="checkbox"
                       checked={formData.products.includes(product)}
                       onChange={() => handleProductChange(product)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                      className="h-4 w-4 cursor-pointer accent-brand"
                     />
-                    <span className="ml-3 text-gray-700">{product}</span>
+                    <span className="ml-3 text-ink">{product}</span>
                   </label>
                 ))}
               </div>
               {errors.products && (
-                <p id="products-error" className="text-red-500 text-sm mt-1">{errors.products}</p>
+                <p id="products-error" className="field-error">{errors.products}</p>
               )}
-            </div>
+            </fieldset>
 
             {/* Message */}
             <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
-                Message <span className="text-gray-500 text-xs">(optional)</span>
+              <label htmlFor="message" className="field-label">
+                Message <span className="font-normal text-muted">(optional)</span>
               </label>
               <textarea
                 id="message"
@@ -338,21 +342,17 @@ export default function RfdPage() {
                 value={formData.message}
                 onChange={handleInputChange}
                 rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition resize-none"
+                className="field-input resize-y"
                 placeholder="Tell us about your specific needs or questions..."
               />
             </div>
 
             {/* Submit Button */}
-            <div className="flex gap-4">
+            <div className="flex gap-3 pt-2">
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`flex-1 font-medium py-2 px-6 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                  isLoading
-                    ? "bg-blue-400 text-white cursor-not-allowed opacity-75"
-                    : "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500"
-                }`}
+                className="btn btn-primary flex-1"
               >
                 {isLoading ? "Submitting..." : "Submit Demo Request"}
               </button>
@@ -360,18 +360,15 @@ export default function RfdPage() {
                 type="button"
                 onClick={handleClear}
                 disabled={isLoading}
-                className={`font-medium py-2 px-6 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                  isLoading
-                    ? "bg-gray-300 text-gray-800 cursor-not-allowed opacity-75"
-                    : "bg-gray-300 text-gray-800 hover:bg-gray-400 focus:ring-gray-500"
-                }`}
+                className="btn btn-secondary"
               >
                 Clear
               </button>
             </div>
           </form>
         </div>
-      </div>
-    </div>
+        </div>
+      </section>
+    </>
   )
 }
