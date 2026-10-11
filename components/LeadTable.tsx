@@ -5,6 +5,8 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import StatusBadge from "@/components/admin/StatusBadge";
+import ScoreBadge from "@/components/admin/ScoreBadge";
+import type { LeadScoreSummary } from "@/lib/api";
 
 interface Lead {
   id: number;
@@ -15,7 +17,8 @@ interface Lead {
   created_at: string;
 }
 
-type SortColumn = "name" | "email" | "company" | "status" | "created_at";
+// "score" is sorted in the browser; the others are sorted by the API
+type SortColumn = "name" | "email" | "company" | "status" | "created_at" | "score";
 
 const API_URL = BACKEND_API_URL;
 
@@ -26,13 +29,22 @@ export default function LeadTable() {
   const [sortBy, setSortBy] = useState<SortColumn>("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [loading, setLoading] = useState(true);
+  const [scores, setScores] = useState<Record<number, LeadScoreSummary>>({});
+
+  // Rules-based scores for all leads (one request); the table works without them
+  useEffect(() => {
+    fetch(`${API_URL}/leads/scores`, { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((rows: LeadScoreSummary[]) => setScores(Object.fromEntries(rows.map((r) => [r.lead_id, r]))))
+      .catch((err) => console.error("Failed to fetch lead scores:", err));
+  }, []);
 
   const fetchLeads = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
     if (search.trim()) params.set("search", search.trim());
     if (statusFilter !== "all") params.set("status_filter", statusFilter);
-    params.set("sort_by", sortBy);
+    params.set("sort_by", sortBy === "score" ? "created_at" : sortBy);
     params.set("sort_order", sortOrder);
 
     try {
@@ -62,7 +74,7 @@ export default function LeadTable() {
       setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
       setSortBy(column);
-      setSortOrder("asc");
+      setSortOrder(column === "score" ? "desc" : "asc"); // hottest first
     }
   }
 
@@ -80,12 +92,21 @@ export default function LeadTable() {
   }
 
   const columns: { key: SortColumn; label: string }[] = [
+    { key: "score", label: "Score" },
     { key: "company", label: "Company Name" },
     { key: "name", label: "Contact Person" },
     { key: "email", label: "Email" },
     { key: "status", label: "Lead Status" },
     { key: "created_at", label: "Creation Date" },
   ];
+
+  const rows =
+    sortBy === "score"
+      ? [...leads].sort((a, b) => {
+          const diff = (scores[a.id]?.points ?? -1) - (scores[b.id]?.points ?? -1);
+          return sortOrder === "asc" ? diff : -diff;
+        })
+      : leads;
 
   return (
     <div>
@@ -139,17 +160,24 @@ export default function LeadTable() {
           <tbody className="divide-y divide-line">
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-5 py-10 text-center text-muted">Loading leads…</td>
+                <td colSpan={7} className="px-5 py-10 text-center text-muted">Loading leads…</td>
               </tr>
             ) : leads.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-5 py-10 text-center text-muted">
+                <td colSpan={7} className="px-5 py-10 text-center text-muted">
                   {search ? "No leads match your search." : "No leads found."}
                 </td>
               </tr>
             ) : (
-              leads.map((lead) => (
+              rows.map((lead) => (
                 <tr key={lead.id} className="hover:bg-canvas">
+                  <td className="px-5 py-3.5">
+                    {scores[lead.id] ? (
+                      <ScoreBadge label={scores[lead.id].label} points={scores[lead.id].points} />
+                    ) : (
+                      <span className="text-muted">—</span>
+                    )}
+                  </td>
                   <td className="px-5 py-3.5">
                     <Link href={`/admin/leads/${lead.id}`} className="font-semibold text-ink hover:text-brand">
                       {lead.company || "—"}

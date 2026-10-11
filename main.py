@@ -65,9 +65,10 @@ app.include_router(products.router)
 app.include_router(events.router)
 app.include_router(rfd.router)
 app.include_router(auth.router)
+# insights before leads: GET /leads/scores must not be captured by /leads/{lead_id}
+app.include_router(insights.router)
 app.include_router(leads.router)
 app.include_router(analytics.router)
-app.include_router(insights.router)
 
 
 @app.get("/")

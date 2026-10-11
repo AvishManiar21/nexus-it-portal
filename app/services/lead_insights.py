@@ -138,47 +138,99 @@ def parse_ts(value: Optional[str]) -> Optional[datetime]:
     return ts if ts.tzinfo else ts.replace(tzinfo=timezone.utc)
 
 
-def gather(db, lead_id: int) -> tuple[Optional[dict], LeadSignals]:
-    """Load the lead and its behavioral signals. Returns (None, empty) if the lead doesn't exist."""
-    lead_res = db.table("leads").select("id, name, company, budget, source, status, session_id, created_at").eq("id", lead_id).execute()
-    if not lead_res.data:
-        return None, LeadSignals()
-    lead = lead_res.data[0]
+LEAD_COLUMNS = "id, name, company, budget, source, status, session_id, created_at"
+
+
+def _product(row: dict) -> str:
+    return (row.get("products") or {}).get("name", "unknown product")
+
+
+def build_signals(lead: dict, rfd_rows, contact_rows, view_rows, video_rows) -> LeadSignals:
+    """Pure: turn one lead's database rows into signals (shared by single and batch scoring)."""
     signals = LeadSignals()
     timestamps: list[Optional[datetime]] = [parse_ts(lead.get("created_at"))]
 
-    rfd = db.table("rfd_submissions").select("message, created_at, products(name)").eq("lead_id", lead_id).execute()
-    for r in rfd.data or []:
-        signals.demo_requests.append({"product": (r.get("products") or {}).get("name", "unknown product"), "message": r.get("message") or ""})
+    for r in rfd_rows:
+        signals.demo_requests.append({"product": _product(r), "message": r.get("message") or ""})
         timestamps.append(parse_ts(r.get("created_at")))
-
-    contact = db.table("contact_messages").select("subject, message, created_at").eq("lead_id", lead_id).execute()
-    for c in contact.data or []:
+    for c in contact_rows:
         signals.contact_messages.append({"subject": c.get("subject") or "", "message": c.get("message") or ""})
         timestamps.append(parse_ts(c.get("created_at")))
-
-    session_id = lead.get("session_id")
-    if session_id:
-        views = db.table("visitor_page_views").select("viewed_at, products(name)").eq("session_id", session_id).execute()
-        for v in views.data or []:
-            signals.page_views[(v.get("products") or {}).get("name", "unknown product")] += 1
-            timestamps.append(parse_ts(v.get("viewed_at")))
-
-        videos = db.table("video_engagement_events").select(
-            "event_type, watch_duration_seconds, created_at, products(name)"
-        ).eq("session_id", session_id).execute()
-        for e in videos.data or []:
-            name = (e.get("products") or {}).get("name", "unknown product")
-            if e.get("event_type") == "complete":
-                signals.videos_completed.append(name)
-                signals.watch_seconds += int(e.get("watch_duration_seconds") or 0)
-            else:
-                signals.videos_started.append(name)
-            timestamps.append(parse_ts(e.get("created_at")))
+    for v in view_rows:
+        signals.page_views[_product(v)] += 1
+        timestamps.append(parse_ts(v.get("viewed_at")))
+    for e in video_rows:
+        if e.get("event_type") == "complete":
+            signals.videos_completed.append(_product(e))
+            signals.watch_seconds += int(e.get("watch_duration_seconds") or 0)
+        else:
+            signals.videos_started.append(_product(e))
+        timestamps.append(parse_ts(e.get("created_at")))
 
     known = [t for t in timestamps if t]
     signals.last_activity = max(known) if known else None
-    return lead, signals
+    return signals
+
+
+def gather(db, lead_id: int) -> tuple[Optional[dict], LeadSignals]:
+    """Load one lead and its behavioral signals. Returns (None, empty) if the lead doesn't exist."""
+    lead_res = db.table("leads").select(LEAD_COLUMNS).eq("id", lead_id).execute()
+    if not lead_res.data:
+        return None, LeadSignals()
+    lead = lead_res.data[0]
+
+    rfd = db.table("rfd_submissions").select("message, created_at, products(name)").eq("lead_id", lead_id).execute().data or []
+    contact = db.table("contact_messages").select("subject, message, created_at").eq("lead_id", lead_id).execute().data or []
+    views, videos = [], []
+    if lead.get("session_id"):
+        views = db.table("visitor_page_views").select("viewed_at, products(name)").eq("session_id", lead["session_id"]).execute().data or []
+        videos = db.table("video_engagement_events").select(
+            "event_type, watch_duration_seconds, created_at, products(name)"
+        ).eq("session_id", lead["session_id"]).execute().data or []
+    return lead, build_signals(lead, rfd, contact, views, videos)
+
+
+def score_all(db) -> list[dict]:
+    """Score every lead with 5 queries total (not 5 per lead), using the same rules as score_lead."""
+    leads = db.table("leads").select(LEAD_COLUMNS).execute().data or []
+    rfd = db.table("rfd_submissions").select("lead_id, message, created_at, products(name)").execute().data or []
+    contact = db.table("contact_messages").select("lead_id, subject, message, created_at").execute().data or []
+    views = db.table("visitor_page_views").select("session_id, viewed_at, products(name)").execute().data or []
+    videos = db.table("video_engagement_events").select(
+        "session_id, event_type, watch_duration_seconds, created_at, products(name)"
+    ).execute().data or []
+
+    def by(rows, key):
+        grouped: dict = {}
+        for row in rows:
+            grouped.setdefault(row.get(key), []).append(row)
+        return grouped
+
+    rfd_by, contact_by = by(rfd, "lead_id"), by(contact, "lead_id")
+    views_by, videos_by = by(views, "session_id"), by(videos, "session_id")
+    now = datetime.now(timezone.utc)
+
+    results = []
+    for lead in leads:
+        sid = lead.get("session_id")
+        signals = build_signals(
+            lead,
+            rfd_by.get(lead["id"], []),
+            contact_by.get(lead["id"], []),
+            views_by.get(sid, []) if sid else [],
+            videos_by.get(sid, []) if sid else [],
+        )
+        score = score_lead(lead.get("budget"), signals, now=now)
+        results.append({
+            "lead_id": lead["id"],
+            "name": lead.get("name"),
+            "company": lead.get("company"),
+            "status": lead.get("status"),
+            "label": score.label,
+            "points": score.points,
+        })
+    results.sort(key=lambda r: r["points"], reverse=True)
+    return results
 
 
 # ---------------------------------------------------------------------------
