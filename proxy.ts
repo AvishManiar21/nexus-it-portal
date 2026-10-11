@@ -2,9 +2,39 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SignJWT, jwtVerify } from "jose";
 import { getSessionKey } from "./app/lib/sessionKey";
+import { BACKEND_API_URL } from "./lib/backend";
 
 // Must match the value in app/lib/session.ts
 const SESSION_TIMEOUT_MINUTES = 15;
+
+const isDev = process.env.NODE_ENV !== "production";
+
+// Next.js inlines bootstrap scripts, so script-src needs 'unsafe-inline' (no
+// nonce setup); dev additionally needs 'unsafe-eval' and a websocket for HMR.
+// YouTube serves the IFrame API script and the embedded player. Product
+// images are arbitrary HTTPS URLs set by admins.
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://www.youtube.com https://s.ytimg.com`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  `connect-src 'self' ${BACKEND_API_URL}${isDev ? " ws:" : ""}`,
+  "frame-src https://www.youtube.com https://www.youtube-nocookie.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join("; ");
+
+function applySecurityHeaders(response: NextResponse) {
+  response.headers.set("Content-Security-Policy", CONTENT_SECURITY_POLICY);
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  return response;
+}
 
 const protectedRoutes = ["/admin"];
 const publicRoutes = ["/admin/login"];
@@ -38,15 +68,7 @@ export async function proxy(request: NextRequest) {
         path: "/",
       });
     }
-    // Apply security headers
-    response.headers.set("X-Frame-Options", "DENY");
-    response.headers.set("X-Content-Type-Options", "nosniff");
-    response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-    response.headers.set(
-      "Permissions-Policy",
-      "camera=(), microphone=(), geolocation=()"
-    );
-    return response;
+    return applySecurityHeaders(response);
   }
 
   const sessionCookie = request.cookies.get("session")?.value;
@@ -85,15 +107,7 @@ export async function proxy(request: NextRequest) {
       sameSite: "lax",
       path: "/",
     });
-    // Apply security headers
-    response.headers.set("X-Frame-Options", "DENY");
-    response.headers.set("X-Content-Type-Options", "nosniff");
-    response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-    response.headers.set(
-      "Permissions-Policy",
-      "camera=(), microphone=(), geolocation=()"
-    );
-    return response;
+    return applySecurityHeaders(response);
   } catch {
     // Expired or invalid session — clear cookie and redirect to login
     const response = NextResponse.redirect(new URL("/admin/login?expired=1", request.url));
