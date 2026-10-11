@@ -7,11 +7,18 @@ from app.db_pg import close_pool
 from app.rate_limit import limiter
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+import logging
 import os
 from dotenv import load_dotenv
 
 # Load env variables
 load_dotenv()
+
+# Application logging; set LOG_LEVEL=DEBUG to see per-event tracking logs
+logging.basicConfig(
+    level=os.getenv("LOG_LEVEL", "INFO").upper(),
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
 
 
 @asynccontextmanager

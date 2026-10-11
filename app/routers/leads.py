@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, HTTPException, Depends, Query, Request, status, BackgroundTasks
 from pydantic import BaseModel, EmailStr, field_validator
 from supabase import Client
@@ -13,6 +14,8 @@ import re
 from app.database import get_db
 from app.dependencies.auth import get_current_admin
 from app.rate_limit import limiter, FORM_LIMIT
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/leads", tags=["leads"])
 
@@ -228,7 +231,7 @@ def send_admin_rfd_alert(
     """
     try:
         if not SMTP_USERNAME or not SMTP_PASSWORD:
-            print("Warning: SMTP credentials not configured, skipping admin RFD alert")
+            logger.warning("SMTP credentials not configured, skipping admin RFD alert")
             return
 
         # Fetch all admin emails
@@ -238,7 +241,7 @@ def send_admin_rfd_alert(
             if row.get("email")
         ]
         if not admin_emails:
-            print("No admin recipients found for RFD alert; skipping")
+            logger.warning("No admin recipients found for RFD alert; skipping")
             return
 
         timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -303,9 +306,9 @@ Log in to the admin portal to review and follow up.
         server.sendmail(SMTP_USERNAME, admin_emails, msg.as_string())
         server.quit()
 
-        print(f"Admin RFD alert sent to {len(admin_emails)} admin(s) for lead {lead_id}")
-    except Exception as e:
-        print(f"Error sending admin RFD alert (lead {lead_id}): {str(e)}")
+        logger.info("Admin RFD alert sent to %d admin(s) for lead %s", len(admin_emails), lead_id)
+    except Exception:
+        logger.exception("Error sending admin RFD alert (lead %s)", lead_id)
 
 
 def send_visitor_rfd_confirmation(
@@ -320,7 +323,7 @@ def send_visitor_rfd_confirmation(
     """
     try:
         if not SMTP_USERNAME or not SMTP_PASSWORD:
-            print("Warning: SMTP credentials not configured, skipping visitor RFD confirmation")
+            logger.warning("SMTP credentials not configured, skipping visitor RFD confirmation")
             return
 
         # HTML-escape all user-provided values to prevent HTML injection
@@ -409,9 +412,9 @@ This confirmation was sent on {timestamp}
         server.sendmail(envelope_sender, [visitor_email], msg.as_string())
         server.quit()
 
-        print(f"RFD confirmation sent to visitor: {visitor_email}")
-    except Exception as e:
-        print(f"Error sending visitor RFD confirmation to {visitor_email}: {str(e)}")
+        logger.info("RFD confirmation sent to visitor: %s", visitor_email)
+    except Exception:
+        logger.exception("Error sending visitor RFD confirmation to %s", visitor_email)
 
 
 def send_visitor_contact_confirmation(
@@ -425,7 +428,7 @@ def send_visitor_contact_confirmation(
     """
     try:
         if not SMTP_USERNAME or not SMTP_PASSWORD:
-            print("Warning: SMTP credentials not configured, skipping visitor contact confirmation")
+            logger.warning("SMTP credentials not configured, skipping visitor contact confirmation")
             return
 
         # HTML-escape all user-provided values to prevent HTML injection
@@ -500,9 +503,9 @@ This confirmation was sent on {timestamp}
         server.sendmail(envelope_sender, [visitor_email], msg.as_string())
         server.quit()
 
-        print(f"Contact confirmation sent to visitor: {visitor_email}")
-    except Exception as e:
-        print(f"Error sending visitor contact confirmation to {visitor_email}: {str(e)}")
+        logger.info("Contact confirmation sent to visitor: %s", visitor_email)
+    except Exception:
+        logger.exception("Error sending visitor contact confirmation to %s", visitor_email)
 
 
 @router.post("/submit-rfd", response_model=SubmissionResponse)
@@ -556,8 +559,8 @@ async def submit_rfd(request: Request, submission: RFDSubmission, background_tas
                 supabase.table("video_engagement_events").update({
                     "lead_id": lead_id
                 }).eq("session_id", submission.session_id).is_("lead_id", "null").execute()
-            except Exception as e:
-                print(f"Error linking anonymous activity: {str(e)}")
+            except Exception:
+                logger.exception("Error linking anonymous activity to lead %s", lead_id)
 
         # Create engagement log
         try:
@@ -566,8 +569,8 @@ async def submit_rfd(request: Request, submission: RFDSubmission, background_tas
                 "action": "RFD Submission",
                 "details": f"Products: {', '.join(submission.products)}, Budget: {submission.budget}"
             }).execute()
-        except Exception as e:
-            print(f"Error creating engagement log: {str(e)}")
+        except Exception:
+            logger.exception("Error creating engagement log for lead %s", lead_id)
 
         # Schedule visitor confirmation email as a background task (non-blocking)
         background_tasks.add_task(
@@ -598,8 +601,8 @@ async def submit_rfd(request: Request, submission: RFDSubmission, background_tas
 
     except HTTPException:
         raise
-    except Exception as e:
-        print(f"Error processing RFD submission: {e}")
+    except Exception:
+        logger.exception("Error processing RFD submission")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error processing RFD submission"
@@ -653,8 +656,8 @@ def submit_contact(request: Request, submission: ContactSubmission, background_t
                 supabase.table("video_engagement_events").update({
                     "lead_id": lead_id
                 }).eq("session_id", submission.session_id).is_("lead_id", "null").execute()
-            except Exception as e:
-                print(f"Error linking anonymous activity: {str(e)}")
+            except Exception:
+                logger.exception("Error linking anonymous activity to lead %s", lead_id)
 
         # Schedule visitor confirmation email as a background task (non-blocking)
         background_tasks.add_task(
@@ -668,8 +671,8 @@ def submit_contact(request: Request, submission: ContactSubmission, background_t
             "message": "Your message has been received. We will get back to you soon.",
             "lead_id": lead_id
         }
-    except Exception as e:
-        print(f"Error processing contact submission: {e}")
+    except Exception:
+        logger.exception("Error processing contact submission")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to process contact submission"
@@ -682,8 +685,8 @@ def get_contact_messages(admin: dict = Depends(get_current_admin)):
     try:
         response = supabase.table("contact_messages").select("*").execute()
         return response.data
-    except Exception as e:
-        print(f"Error fetching contact messages: {e}")
+    except Exception:
+        logger.exception("Error fetching contact messages")
         return []
 
 
@@ -743,8 +746,8 @@ async def get_lead(lead_id: int, admin: dict = Depends(get_current_admin)):
         return response.data[0]
     except HTTPException:
         raise
-    except Exception as e:
-        print(f"Error fetching lead {lead_id}: {e}")
+    except Exception:
+        logger.exception("Error fetching lead %s", lead_id)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error fetching lead"
@@ -787,7 +790,7 @@ async def get_lead_profile(lead_id: int, db: Client = Depends(get_db), admin: di
         ).eq("lead_id", lead_id).order("created_at", desc=True).execute()
     except Exception as e:
         # Handle case where table doesn't exist yet or isn't in schema cache
-        print(f"Warning: Could not fetch lead_status_audit: {e}")
+        logger.warning("Could not fetch lead_status_audit: %s", e)
         status_history_res = type('obj', (object,), {'data': []})()
 
     # Build a unified chronological timeline
@@ -943,7 +946,7 @@ async def update_lead_status(
     except Exception as e:
         # Log the error but don't fail the entire request
         # Some leads may not have RFD submissions
-        print(f"Warning: Could not update rfd_submissions status for lead {lead_id}: {e}")
+        logger.warning("Could not update rfd_submissions status for lead %s: %s", lead_id, e)
 
     # Create audit log entry
     audit_res = db.table("lead_status_audit").insert({
